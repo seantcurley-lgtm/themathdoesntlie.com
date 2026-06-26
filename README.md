@@ -1,2 +1,3 @@
-# themathdoesntlie.com
+# The Math Doesn't Lie
+
 Engineering better decisions with data.
