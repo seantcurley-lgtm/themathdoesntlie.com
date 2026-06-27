@@ -3,32 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Articles | The Math Doesn't Lie</title>
-  <meta name="description" content="Featured articles from The Math Doesn't Lie." />
+  <title>Analysis | The Math Doesn't Lie</title>
+  <meta name="description" content="Featured data-driven analysis from The Math Doesn't Lie." />
+  <meta property="og:title" content="Analysis | The Math Doesn't Lie" />
+  <meta property="og:description" content="Featured data-driven analysis from The Math Doesn't Lie." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://themathdoesntlie.com/" />
+  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4TQ8CXRZP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-X4TQ8CXRZP');
+  </script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html"><span class="mark">∑</span><span>The Math Doesn't Lie</span></a>
+    <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
+      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+    </a>
     <nav>
-      <a href="daily-brief.html">Daily Brief</a>
-      <a href="articles.html">Articles</a>
+      <a href="daily-brief.html">Executive Brief</a>
+      <a href="articles.html">Analysis</a>
       <a href="tools.html">Tools</a>
       <a href="about.html">About</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
     </nav>
   </header>
 
   <main class="page">
     <p class="eyebrow">Analysis archive</p>
-    <h1>Articles</h1>
-    <p class="lede">The permanent home for data-driven analysis. Link Substack posts here now; mirror or rewrite them later.</p>
+    <h1>Analysis</h1>
+    <p class="lede">The permanent home for data-driven analysis. Current pieces link to Substack; mirrored article pages can come later.</p>
 
     <section id="water" class="article-section">
       <h2>Water</h2>
       <div class="article-list">
-        <a href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Arizona's Water Balance Sheet <span>Substack →</span></a>
+        <a href="https://themathdoesntlie.substack.com/p/arizonas-water-balance-sheet" target="_blank" rel="noopener">Arizona's Water Balance Sheet <span>Substack →</span></a>
         <a href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">The Pecan Bet <span>Substack →</span></a>
+        <a href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Hydro Is Great... Until the Water Runs Out <span>Substack →</span></a>
       </div>
     </section>
 
@@ -36,6 +53,7 @@
       <h2>Finance</h2>
       <div class="article-list">
         <a href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Covered Calls and the Retirement Gap <span>Coming Soon →</span></a>
+        <a href="tools.html">Covered Call Analyzer <span>Tool in progress →</span></a>
       </div>
     </section>
 
@@ -43,6 +61,7 @@
       <h2>Retirement</h2>
       <div class="article-list">
         <a href="tools.html">Retirement Stress Tester <span>Tool in progress →</span></a>
+        <a href="tools.html">Pension Bridge Planner <span>Tool in progress →</span></a>
       </div>
     </section>
 
@@ -54,8 +73,6 @@
     </section>
   </main>
 
-  <footer>
-    <p>© 2026 The Math Doesn't Lie.</p>
-  </footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
 </body>
 </html>

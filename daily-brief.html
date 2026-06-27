@@ -3,49 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Daily Intelligence Brief | The Math Doesn't Lie</title>
-  <meta name="description" content="A daily intelligence brief from The Math Doesn't Lie." />
+  <title>Daily Executive Brief | The Math Doesn't Lie</title>
+  <meta name="description" content="A daily executive brief from The Math Doesn't Lie: facts first, analysis second, and what to watch next." />
+  <meta property="og:title" content="Daily Executive Brief | The Math Doesn't Lie" />
+  <meta property="og:description" content="A daily executive brief from The Math Doesn't Lie: facts first, analysis second, and what to watch next." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://themathdoesntlie.com/" />
+  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4TQ8CXRZP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-X4TQ8CXRZP');
+  </script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html"><span class="mark">∑</span><span>The Math Doesn't Lie</span></a>
+    <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
+      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+    </a>
     <nav>
-      <a href="daily-brief.html">Daily Brief</a>
-      <a href="articles.html">Articles</a>
+      <a href="daily-brief.html">Executive Brief</a>
+      <a href="articles.html">Analysis</a>
       <a href="tools.html">Tools</a>
       <a href="about.html">About</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
     </nav>
   </header>
 
   <main class="page">
     <p class="eyebrow">Morning command center</p>
-    <h1>Daily Intelligence Brief</h1>
-    <p class="lede">A 15-minute scan of the stories that matter: facts first, analysis second, and what to watch next.</p>
+    <h1>Daily Executive Brief</h1>
+    <p class="lede">A 10–15 minute scan of the stories that matter: facts first, analysis second, and what to watch next.</p>
 
     <article class="brief">
-      <p class="tag">Template</p>
-      <h2>Today's Brief</h2>
-      <p>This is where the daily brief goes. For now, paste the morning brief here and commit the file. Later, we'll automate the archive.</p>
+      <p class="tag">Today's Brief</p>
+      <h2>Today's Executive Brief</h2>
+      <p>This page is the permanent home for the daily brief. For v1.1, paste or link today's published brief here after upload. Later, this becomes the archive and automation hub.</p>
 
-      <h3>Top Stories</h3>
+      <div class="actions">
+        <a class="button primary" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Open Latest Brief on Substack</a>
+        <a class="button secondary" href="articles.html">Browse Analysis</a>
+      </div>
+
+      <h3>Brief Format</h3>
       <ul>
-        <li><strong>Markets:</strong> What moved, why, and what to watch next.</li>
-        <li><strong>Arizona:</strong> Water, infrastructure, politics, housing, and local economic signals.</li>
-        <li><strong>Technology:</strong> AI, energy, data centers, chips, and second-order effects.</li>
+        <li><strong>Top Stories:</strong> What happened and why it matters.</li>
+        <li><strong>Market & Policy Signals:</strong> The numbers, incentives, and risks worth tracking.</li>
+        <li><strong>Arizona & Infrastructure:</strong> Local signals with national implications.</li>
+        <li><strong>What to Watch Next:</strong> Follow-up questions that separate headlines from useful intelligence.</li>
       </ul>
-
-      <h3>The Math</h3>
-      <p>One number worth remembering, one assumption worth testing, and one signal that might matter later.</p>
-
-      <h3>What to Watch Next</h3>
-      <p>The follow-up questions that separate headlines from useful intelligence.</p>
     </article>
   </main>
 
-  <footer>
-    <p>© 2026 The Math Doesn't Lie.</p>
-  </footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
 </body>
 </html>

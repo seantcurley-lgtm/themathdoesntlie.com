@@ -5,23 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About | The Math Doesn't Lie</title>
   <meta name="description" content="About The Math Doesn't Lie." />
+  <meta property="og:title" content="About | The Math Doesn't Lie" />
+  <meta property="og:description" content="About The Math Doesn't Lie." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://themathdoesntlie.com/" />
+  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4TQ8CXRZP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-X4TQ8CXRZP');
+  </script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html"><span class="mark">∑</span><span>The Math Doesn't Lie</span></a>
+    <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
+      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+    </a>
     <nav>
-      <a href="daily-brief.html">Daily Brief</a>
-      <a href="articles.html">Articles</a>
+      <a href="daily-brief.html">Executive Brief</a>
+      <a href="articles.html">Analysis</a>
       <a href="tools.html">Tools</a>
       <a href="about.html">About</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
     </nav>
   </header>
 
   <main class="page narrow">
     <p class="eyebrow">Mission</p>
-    <h1>Because opinions are cheap. The math isn't.</h1>
+    <h1>Data. Models. Assumptions. You decide.</h1>
     <p class="lede">The Math Doesn't Lie is a data-driven publication for people who want to see the assumptions behind big decisions.</p>
 
     <div class="brief">
@@ -30,9 +46,6 @@
       <p>Articles explain the story. Tools let readers test the math themselves.</p>
     </div>
   </main>
-
-  <footer>
-    <p>© 2026 The Math Doesn't Lie.</p>
-  </footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
 </body>
 </html>

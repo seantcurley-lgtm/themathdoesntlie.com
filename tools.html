@@ -4,18 +4,34 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tools | The Math Doesn't Lie</title>
-  <meta name="description" content="Interactive tools from The Math Doesn't Lie." />
+  <meta name="description" content="Interactive decision tools from The Math Doesn't Lie." />
+  <meta property="og:title" content="Tools | The Math Doesn't Lie" />
+  <meta property="og:description" content="Interactive decision tools from The Math Doesn't Lie." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://themathdoesntlie.com/" />
+  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4TQ8CXRZP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-X4TQ8CXRZP');
+  </script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html"><span class="mark">∑</span><span>The Math Doesn't Lie</span></a>
+    <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
+      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+    </a>
     <nav>
-      <a href="daily-brief.html">Daily Brief</a>
-      <a href="articles.html">Articles</a>
+      <a href="daily-brief.html">Executive Brief</a>
+      <a href="articles.html">Analysis</a>
       <a href="tools.html">Tools</a>
       <a href="about.html">About</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
     </nav>
   </header>
 
@@ -25,31 +41,12 @@
     <p class="lede">The long-term moat: models people can actually use.</p>
 
     <div class="card-grid">
-      <article class="topic-card">
-        <span class="icon">📈</span>
-        <h3>Retirement Stress Tester</h3>
-        <p>Model gap years, pensions, Roth conversions, healthcare, taxes, and bad-sequence risk.</p>
-      </article>
-      <article class="topic-card">
-        <span class="icon">💵</span>
-        <h3>Covered Call Analyzer</h3>
-        <p>Estimate premium yield, dividend impact, assignment risk, and tradeoffs versus buy-and-hold.</p>
-      </article>
-      <article class="topic-card">
-        <span class="icon">💧</span>
-        <h3>Arizona Water Dashboard</h3>
-        <p>Compare water use, GDP, agriculture, housing growth, and infrastructure constraints.</p>
-      </article>
-      <article class="topic-card">
-        <span class="icon">🏦</span>
-        <h3>Pension Bridge Planner</h3>
-        <p>Bridge the years before pensions and Social Security begin without lying to yourself.</p>
-      </article>
+      <article class="topic-card"><span class="icon">📈</span><h3>Retirement Stress Tester</h3><p>Model gap years, pensions, Roth conversions, healthcare, taxes, and bad-sequence risk.</p></article>
+      <article class="topic-card"><span class="icon">💵</span><h3>Covered Call Analyzer</h3><p>Estimate premium yield, dividend impact, assignment risk, and tradeoffs versus buy-and-hold.</p></article>
+      <article class="topic-card"><span class="icon">💧</span><h3>Arizona Water Dashboard</h3><p>Compare water use, GDP, agriculture, housing growth, and infrastructure constraints.</p></article>
+      <article class="topic-card"><span class="icon">🏦</span><h3>Pension Bridge Planner</h3><p>Bridge the years before pensions and Social Security begin without lying to yourself.</p></article>
     </div>
   </main>
-
-  <footer>
-    <p>© 2026 The Math Doesn't Lie.</p>
-  </footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
 </body>
 </html>
