@@ -9,7 +9,7 @@
 <body>
   <div class="app">
     <aside>
-      <div class="brand">Finance Tracker V2.3.5</div>
+      <div class="brand">Finance Tracker V2.3.5.1</div>
       <div class="tag">Full tracker restored. Cash flow. Capital preservation. Real growth.</div>
       <div class="nav" id="nav"></div>
     </aside>
@@ -28,20 +28,13 @@
 
   <script src="data.js"></script>
   <script src="tracker.js"></script>
+  <script src="holdings-recovery.js"></script>
   <script>
     const holdingsTab = pages.find(p => p[0] === 'holdings');
     if (holdingsTab) {
       holdingsTab[1] = 'Covered Call Holdings';
-      holdingsTab[2] = 'The positions included in the live covered call experiment.';
+      holdingsTab[2] = 'Ranked holdings, contribution intelligence, and covered-call premium trends.';
     }
-
-    const coveredCallHoldingsPage = holdingsPage;
-    holdingsPage = function () {
-      return coveredCallHoldingsPage()
-        .replace('Stock Value', 'Tracked Holdings Value')
-        .replace('Live holdings', 'Live covered call holdings')
-        .replace('Baseline holdings', 'Baseline covered call holdings');
-    };
 
     render();
   </script>
