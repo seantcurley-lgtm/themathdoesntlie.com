@@ -9,7 +9,7 @@
 <body>
   <div class="app">
     <aside>
-      <div class="brand">Finance Tracker V2.3.4</div>
+      <div class="brand">Finance Tracker V2.3.5</div>
       <div class="tag">Full tracker restored. Cash flow. Capital preservation. Real growth.</div>
       <div class="nav" id="nav"></div>
     </aside>
@@ -44,12 +44,6 @@
     };
 
     render();
-
-    // V2.3.3: Live mode now attempts to load current quotes automatically on page load.
-    // If the quote service is unavailable, the tracker keeps the existing static fallback.
-    if (typeof refreshLive === 'function') {
-      setTimeout(refreshLive, 250);
-    }
   </script>
 </body>
 </html>
