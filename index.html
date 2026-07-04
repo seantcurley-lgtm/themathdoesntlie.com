@@ -3,64 +3,96 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Math Doesn't Lie | Version 1.3</title>
-  <meta name="description" content="The Math Doesn't Lie is a data-driven publication covering markets, water, finance, retirement, technology, policy, and daily executive briefs." />
-  <meta property="og:title" content="The Math Doesn't Lie | Data. Models. Assumptions. You Decide." />
-  <meta property="og:description" content="The Math Doesn't Lie is a data-driven publication covering markets, water, finance, retirement, technology, policy, and daily executive briefs." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://themathdoesntlie.com/" />
-  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
+  <title>The Math Doesn't Lie | Data. Models. Assumptions. You decide.</title>
+  <meta name="description" content="The Math Doesn't Lie is a research platform for data-first analysis, explicit assumptions, interactive tools, and practical decision models." />
   <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
-      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+      <img class="brand-logo-full" src="logo-full.png" alt="The Math Doesn't Lie" />
     </a>
-    <nav>
+    <nav aria-label="Primary navigation">
+      <a href="index.html" aria-current="page">Home</a>
       <a href="daily-brief.html">Executive Brief</a>
       <a href="articles.html">Analysis</a>
-      <a href="tools.html">Tools</a>
-      <a href="about.html">About</a>
-      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
+      <a href="tools.html">Covered Call Lab</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="contact.html">Contact</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/subscribe" target="_blank" rel="noopener noreferrer">Subscribe</a>
     </nav>
   </header>
+
   <main>
-    <section class="hero hero-v11 grid-bg">
-      <div class="hero-copy">
-        <p class="eyebrow">Data. Models. Assumptions. You decide.</p>
-        <h1>THE MATH DOESN’T LIE</h1>
-        <p class="lede">A data-driven publication for people who want the facts, the assumptions, and the model before the conclusion.</p>
-        <div class="actions">
-          <a class="button primary" href="daily-brief.html">Read Today's Executive Brief</a>
-          <a class="button secondary" href="tools/covered-call-tracker/">Launch Tracker Beta</a>
+    <section class="hero hero-new">
+      <div class="hero-grid-bg" aria-hidden="true"></div>
+      <div class="hero-curve" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="eyebrow">Independent research • transparent models • practical tools</p>
+        <h1>Engineering clarity.<br><span>Better decisions.</span></h1>
+        <p class="hero-lede">The Math Doesn't Lie is the front door for data-first research, explicit assumptions, and interactive tools that show the work behind the conclusion.</p>
+        <div class="hero-actions">
+          <a class="button secondary" href="methodology.html">Read the methodology</a>
         </div>
       </div>
-      <aside class="hero-logo-card"><img src="logo.png" alt="The Math Doesn't Lie logo" /></aside>
     </section>
 
-    <section class="section">
-      <div class="feature-card executive-card">
+    <section class="home-section featured-lab" aria-label="Featured tool">
+      <p class="section-label">Featured</p>
+      <article class="lab-panel">
+        <div class="lab-icon" aria-hidden="true">⚗️</div>
         <div>
-          <p class="eyebrow">Featured Tool</p>
-          <h2>Covered Call Strategy Tracker</h2>
-          <p>A live beta experiment built around three priorities: cash flow first, capital preservation second, and growth above inflation third. Every benchmark, assumption, and calculation is documented.</p>
+          <p class="tag">Flagship</p>
+          <h2>Covered Call Lab</h2>
+          <p>A transparent, real-world investment experiment exploring dividend investing, covered calls, portfolio construction, income generation, and portfolio management through data and measurable results.</p>
         </div>
-        <a class="button primary" href="tools/covered-call-tracker/">Launch Tracker</a>
+        <a class="button primary" href="covered-call-lab/">Launch Covered Call Lab</a>
+      </article>
+    </section>
+
+    <section class="home-section" aria-label="Research areas">
+      <p class="section-label">Research areas</p>
+      <div class="research-grid">
+        <article class="research-card">
+          <span class="research-icon">📰</span>
+          <h3>Executive Brief</h3>
+          <p>Daily market, economic, policy, infrastructure, and Arizona intelligence.</p>
+          <a href="daily-brief.html">Read the latest →</a>
+        </article>
+        <article class="research-card">
+          <span class="research-icon">📊</span>
+          <h3>Financial Analysis</h3>
+          <p>Long-form research on investing, retirement, income strategies, and portfolio tradeoffs.</p>
+          <a href="articles.html#financial-analysis">Explore analysis →</a>
+        </article>
+        <article class="research-card">
+          <span class="research-icon">💧</span>
+          <h3>Water & Infrastructure</h3>
+          <p>Research on Arizona water, infrastructure, economics, growth, and public policy.</p>
+          <a href="articles.html#water-infrastructure">View research →</a>
+        </article>
       </div>
     </section>
 
-    <section class="section brief-callout">
-      <div class="section-head">
-        <p class="eyebrow">Morning command center</p>
-        <h2>Daily Executive Brief</h2>
-        <p>A concise scan...</p>
+    <section class="home-section split-section light-split">
+      <div>
+        <p class="eyebrow">Research first. Tools second.</p>
+        <h2>The website is the permanent workbench.</h2>
+        <p>Substack remains the publishing system for Executive Briefs and long-form articles. The website organizes the durable parts: dashboards, tools, methodology, definitions, and experiments readers can inspect.</p>
+      </div>
+      <div class="process-card">
+        <h3>How to read the work</h3>
+        <ol>
+          <li>Start with the data.</li>
+          <li>State the assumptions.</li>
+          <li>Build the model.</li>
+          <li>Compare results against a benchmark.</li>
+          <li>Update when facts change.</li>
+        </ol>
       </div>
     </section>
-
-    <footer><p>© 2026 The Math Doesn't Lie. Built for people who want to see the assumptions.</p></footer>
   </main>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.1 · Production Baseline 1</a></p></footer>
 </body>
 </html>

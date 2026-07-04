@@ -3,63 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Daily Executive Brief | The Math Doesn't Lie</title>
-  <meta name="description" content="A daily executive brief from The Math Doesn't Lie: facts first, analysis second, and what to watch next." />
-  <meta property="og:title" content="Daily Executive Brief | The Math Doesn't Lie" />
-  <meta property="og:description" content="A daily executive brief from The Math Doesn't Lie: facts first, analysis second, and what to watch next." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://themathdoesntlie.com/" />
-  <meta property="og:image" content="https://themathdoesntlie.com/logo.png" />
+  <title>Executive Brief | The Math Doesn't Lie</title>
+  <meta name="description" content="Daily Executive Brief from The Math Doesn't Lie." />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-X4TQ8CXRZP"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-X4TQ8CXRZP');
-  </script>
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
-      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+      <img class="brand-logo-full" src="logo-full.png" alt="The Math Doesn't Lie" />
     </a>
-    <nav>
-      <a href="daily-brief.html">Executive Brief</a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="daily-brief.html" aria-current="page">Executive Brief</a>
       <a href="articles.html">Analysis</a>
-      <a href="tools.html">Tools</a>
-      <a href="about.html">About</a>
-      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
+      <a href="tools.html">Covered Call Lab</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="contact.html">Contact</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/subscribe" target="_blank" rel="noopener noreferrer">Subscribe</a>
     </nav>
   </header>
 
-  <main class="page">
-    <p class="eyebrow">Morning command center</p>
-    <h1>Daily Executive Brief</h1>
-    <p class="lede">A 10–15 minute scan of the stories that matter: facts first, analysis second, and what to watch next.</p>
-
-    <article class="brief">
-      <p class="tag">Today's Brief</p>
-      <h2>Today's Executive Brief</h2>
-      <p>This page is the permanent home for the daily brief. For v1.1, paste or link today's published brief here after upload. Later, this becomes the archive and automation hub.</p>
-
-      <div class="actions">
-        <a class="button primary" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Open Latest Brief on Substack</a>
-        <a class="button secondary" href="articles.html">Browse Analysis</a>
-      </div>
-
-      <h3>Brief Format</h3>
-      <ul>
-        <li><strong>Top Stories:</strong> What happened and why it matters.</li>
-        <li><strong>Market & Policy Signals:</strong> The numbers, incentives, and risks worth tracking.</li>
-        <li><strong>Arizona & Infrastructure:</strong> Local signals with national implications.</li>
-        <li><strong>What to Watch Next:</strong> Follow-up questions that separate headlines from useful intelligence.</li>
-      </ul>
-    </article>
+  <main class="page narrow">
+    <p class="eyebrow">Executive Brief</p>
+    <h1>The daily intelligence layer.</h1>
+    <p class="lede">Executive Briefs publish through Substack. This page keeps the website navigation stable while sending readers directly to the Executive Brief section.</p>
+    <div class="content-block">
+      <h2>Current destination</h2>
+      <p>Use the button below to open the Executive Brief section on Substack. Automated latest-brief display remains planned for Website v3.0.</p>
+      <p><a class="button primary" href="https://themathdoesntlie.substack.com/s/executive-brief" target="_blank" rel="noopener noreferrer">Open Executive Brief →</a></p>
+    </div>
   </main>
-
-  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.1 · Production Baseline 1</a></p></footer>
 </body>
 </html>

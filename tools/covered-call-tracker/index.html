@@ -1,49 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Covered Call Strategy Tracker | The Math Doesn't Lie</title>
-  <link rel="stylesheet" href="tracker.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redirecting to Covered Call Lab</title>
+  <meta http-equiv="refresh" content="0; url=../../covered-call-lab/" />
+  <link rel="canonical" href="../../covered-call-lab/" />
 </head>
 <body>
-  <div class="app">
-    <aside>
-      <div class="brand">Finance Tracker V2.3.5</div>
-      <div class="tag">Full tracker restored. Cash flow. Capital preservation. Real growth.</div>
-      <div class="nav" id="nav"></div>
-    </aside>
-
-    <main>
-      <div class="topbar">
-        <div>
-          <h1 id="title"></h1>
-          <div class="subtitle" id="sub"></div>
-        </div>
-        <div class="modeToggle" id="modeToggle"></div>
-      </div>
-      <section id="view"></section>
-    </main>
-  </div>
-
-  <script src="data.js"></script>
-  <script src="tracker.js"></script>
-  <script>
-    const holdingsTab = pages.find(p => p[0] === 'holdings');
-    if (holdingsTab) {
-      holdingsTab[1] = 'Covered Call Holdings';
-      holdingsTab[2] = 'The positions included in the live covered call experiment.';
-    }
-
-    const coveredCallHoldingsPage = holdingsPage;
-    holdingsPage = function () {
-      return coveredCallHoldingsPage()
-        .replace('Stock Value', 'Tracked Holdings Value')
-        .replace('Live holdings', 'Live covered call holdings')
-        .replace('Baseline holdings', 'Baseline covered call holdings');
-    };
-
-    render();
-  </script>
+  <p>Redirecting to <a href="../../covered-call-lab/">Covered Call Lab</a>.</p>
 </body>
 </html>

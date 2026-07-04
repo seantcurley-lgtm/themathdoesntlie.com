@@ -3,43 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tools | The Math Doesn't Lie</title>
-  <meta name="description" content="Interactive decision tools from The Math Doesn't Lie." />
+  <title>Covered Call Lab | The Math Doesn't Lie</title>
+  <meta name="description" content="The Covered Call Lab is the flagship live experiment and interactive research platform from The Math Doesn't Lie." />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home">
-      <img class="brand-logo" src="logo.png" alt="The Math Doesn't Lie logo" />
+      <img class="brand-logo-full" src="logo-full.png" alt="The Math Doesn't Lie" />
     </a>
-    <nav>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a>
       <a href="daily-brief.html">Executive Brief</a>
       <a href="articles.html">Analysis</a>
-      <a href="tools.html">Tools</a>
-      <a href="about.html">About</a>
-      <a class="nav-cta" href="https://themathdoesntlie.substack.com/" target="_blank" rel="noopener">Subscribe</a>
+      <a href="tools.html" aria-current="page">Covered Call Lab</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="contact.html">Contact</a>
+      <a class="nav-cta" href="https://themathdoesntlie.substack.com/subscribe" target="_blank" rel="noopener noreferrer">Subscribe</a>
     </nav>
   </header>
 
   <main class="page">
-    <p class="eyebrow">Engineering workbench</p>
-    <h1>Interactive Tools</h1>
-    <p class="lede">The long-term moat: models people can actually use.</p>
+    <p class="eyebrow">Covered Call Lab</p>
+    <h1>The flagship live experiment.</h1>
+    <p class="lede">The Lab is the primary interactive experience on The Math Doesn't Lie: a real-world investment experiment with dashboards, ledgers, modeling tools, methodology, and future portfolio-design modules.</p>
 
-    <div class="card-grid">
-      <a class="topic-card" href="tools/covered-call-tracker/">
-        <span class="icon">📊</span>
-        <p class="tag">Beta</p>
-        <h3>Covered Call Strategy Tracker</h3>
-        <p>A transparent experiment tracker for cash flow, capital preservation, benchmark performance, and the assumptions behind the math.</p>
-      </a>
-      <article class="topic-card"><span class="icon">📈</span><h3>Retirement Stress Tester</h3><p>Model gap years, pensions, Roth conversions, healthcare, taxes, and bad-sequence risk.</p></article>
-      <article class="topic-card"><span class="icon">💵</span><h3>Covered Call Analyzer</h3><p>Estimate premium yield, dividend impact, assignment risk, and tradeoffs versus buy-and-hold.</p></article>
-      <article class="topic-card"><span class="icon">💧</span><h3>Arizona Water Dashboard</h3><p>Compare water use, GDP, agriculture, housing growth, and infrastructure constraints.</p></article>
-      <article class="topic-card"><span class="icon">🏦</span><h3>Pension Bridge Planner</h3><p>Bridge the years before pensions and Social Security begin without lying to yourself.</p></article>
-    </div>
+    <section class="tool-hero-card">
+      <div>
+        <p class="tag">Live</p>
+        <h2>Covered Call Lab</h2>
+        <p>A transparent research environment for tracking covered-call income, capital movement, assignment risk, benchmark performance, and the assumptions behind the strategy.</p>
+        <ul class="clean-list columns">
+          <li>Dashboard</li>
+          <li>Portfolio</li>
+          <li>Holdings</li>
+          <li>Covered Call Ledger</li>
+          <li>Performance</li>
+          <li>Sandbox modeling</li>
+          <li>Methodology</li>
+          <li>FAQ</li>
+        </ul>
+      </div>
+      <a class="button primary" href="covered-call-lab/">Launch Lab</a>
+    </section>
+
+    <section class="content-block">
+      <p class="section-label">Future Lab modules</p>
+      <div class="card-grid two">
+        <article class="topic-card">
+          <span class="icon">🏰</span>
+          <p class="tag">Future module</p>
+          <h3>Build Your Own Moat</h3>
+          <p>Select companies, view sector allocation, compare diversification, and test a model against the current portfolio.</p>
+        </article>
+        <article class="topic-card">
+          <span class="icon">🧭</span>
+          <p class="tag">Future module</p>
+          <h3>Design My Moat</h3>
+          <p>Start with target sector percentages and build a model portfolio from a curated universe of high-quality, dividend-paying, covered-call-friendly companies.</p>
+        </article>
+      </div>
+    </section>
+
   </main>
-  <footer><p>© 2026 The Math Doesn't Lie.</p></footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.1 · Production Baseline 1</a></p></footer>
 </body>
 </html>
