@@ -26,45 +26,44 @@
 
   <main class="page-shell">
     <p class="eyebrow">Release Notes</p>
-    <h1>The Math Doesn't Lie — Production Baseline 1</h1>
-    <p class="page-intro">This is the first assembled production baseline for the full The Math Doesn't Lie platform: Website v2.5.1, Covered Call Lab v2.3.7, and Substack v1.0 integration.</p>
+    <h1>The Math Doesn't Lie — Covered Call Lab v2.5.0 Production</h1>
+    <p class="page-intro">This release promotes the Covered Call Lab hybrid valuation architecture to production. The June 30, 2026 ledger is the active audited ledger; market-sensitive values update from live quote refreshes.</p>
 
     <section class="content-card">
-      <h2>Production Baseline 1</h2>
-      <p><strong>Status:</strong> Release candidate for final archive and GitHub deployment.</p>
+      <h2>Production Release v2.5.0</h2>
+      <p><strong>Status:</strong> Production.</p>
       <ul>
-        <li>Website v2.5.1 included.</li>
-        <li>Covered Call Lab v2.3.7 merged as a standalone application under <code>/covered-call-lab/</code>.</li>
-        <li>Verified Substack section links retained.</li>
-        <li>Footer version marker added across the website.</li>
-        <li>Release Notes page added for ongoing version tracking.</li>
+        <li>Covered Call Lab v2.5.0 promoted to production.</li>
+        <li>Hybrid valuation architecture implemented.</li>
+        <li>Historical ledger accounting remains fixed until the next ledger reconciliation.</li>
+        <li>Live quote refresh updates market-sensitive values only.</li>
+        <li>Open covered-call positions use strategy-adjusted stock values capped at the active strike.</li>
+        <li>Portfolio Value now reconciles against the live brokerage account within normal quote-timing variance.</li>
+        <li>Strike Ceiling Value added as a visible holdings metric.</li>
+        <li>Benchmark snapshot dates added.</li>
+        <li>Benchmark ending values corrected to derive from the same baseline as return percentages.</li>
+        <li>Production DTE behavior restored.</li>
+        <li>Sandbox behavior preserved.</li>
+        <li>Privacy cleanup applied to portfolio naming.</li>
       </ul>
     </section>
 
     <section class="content-card">
-      <h2>Website v2.5.1</h2>
-      <p>Focused Substack integration release using verified public section URLs.</p>
+      <h2>Validation Baseline</h2>
       <ul>
-        <li>Executive Brief — verified Substack section link.</li>
-        <li>Financial Analysis — verified Substack section link.</li>
-        <li>Water & Infrastructure — verified Substack section link.</li>
-        <li>Economics & Data — verified Substack section link.</li>
-        <li>Subscribe and Archive links point to Substack.</li>
-        <li>Website v2.4 visual baseline preserved.</li>
+        <li>Ledger Snapshot: June 30, 2026.</li>
+        <li>Benchmark Baseline: March 31, 2026.</li>
+        <li>Portfolio Value validated against the live brokerage account using current market quotes.</li>
+        <li>Strike Ceiling Value validated at approximately $77,750 for the current covered-call book.</li>
       </ul>
     </section>
 
     <section class="content-card">
-      <h2>Covered Call Lab v2.3.7</h2>
-      <p>Flagship interactive research application merged into the website as an isolated app folder. Website and Lab assets remain separate so future Lab releases can be updated independently.</p>
-    </section>
-
-    <section class="content-card">
-      <h2>Substack v1.0</h2>
-      <p>Publication architecture is stable with permanent sections for Executive Brief, Financial Analysis, Water & Infrastructure, and Economics & Data.</p>
+      <h2>Release Discipline</h2>
+      <p>This build is the new production baseline. The valuation engine should remain frozen until the next monthly ledger reconciliation unless a must-fix accounting, privacy, quote, or user-interface defect is found.</p>
     </section>
   </main>
 
-  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.1 · Production Baseline 1</a></p></footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.0 · Covered Call Lab v2.5.0 Production</a></p></footer>
 </body>
 </html>
