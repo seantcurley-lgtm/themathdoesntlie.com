@@ -1,42 +1,29 @@
-# The Math Doesn't Lie — Production Baseline 1
+# Covered Call Lab v2.5.0 — Production Release
 
-Status: Release candidate for final archive and GitHub deployment.
+Release Date: July 2026
 
-## Components
+## Status
 
-- Website v2.5.1
-- Covered Call Lab v2.3.7
-- Substack v1.0 integration
+Production.
 
-## Website v2.5.1
+## Ledger Snapshot
 
-- Verified Substack links:
-  - Executive Brief: https://themathdoesntlie.substack.com/s/executive-brief
-  - Financial Analysis: https://themathdoesntlie.substack.com/s/financial-analysis
-  - Water & Infrastructure: https://themathdoesntlie.substack.com/s/water-and-infrastructure
-  - Economics & Data: https://themathdoesntlie.substack.com/s/economics-and-data
-  - Subscribe: https://themathdoesntlie.substack.com/subscribe
-  - Archive: https://themathdoesntlie.substack.com/archive
-- Added footer version marker.
-- Added Release Notes page.
-- Preserved Website v2.4 visual baseline.
+June 30, 2026.
 
-## Covered Call Lab v2.3.7
+## Major Changes
 
-- Merged as a standalone app under `/covered-call-lab/`.
-- Website launch links now point to `/covered-call-lab/`.
-- Legacy redirect retained at `/tools/covered-call-tracker/` for compatibility.
+- Hybrid valuation architecture promoted to production.
+- Historical ledger accounting remains immutable until the next ledger reconciliation.
+- Live quote refresh updates market-sensitive values only.
+- Open covered-call positions use strategy-adjusted stock values capped at the active strike.
+- Portfolio Value reconciles against the live brokerage account within normal quote-timing variance.
+- Strike Ceiling Value added to the holdings view.
+- Benchmark snapshot dates added.
+- Benchmark ending values corrected to derive from the same baseline as return percentages.
+- Production DTE behavior restored.
+- Sandbox behavior preserved.
+- Privacy cleanup applied to portfolio naming.
 
-## Release Scope
+## Release Rule
 
-This is an integration and production assembly release. It does not introduce new website design changes or new Lab features.
-
-## QA Focus
-
-- Homepage loads.
-- Footer shows Website v2.5.1 / Production Baseline 1.
-- Release Notes page opens.
-- Substack links open correctly.
-- Covered Call Lab launches from homepage and Covered Call Lab page.
-- `/covered-call-lab/` loads the tracker application.
-- `/tools/covered-call-tracker/` redirects to `/covered-call-lab/`.
+This build is the new production baseline. The valuation engine should remain frozen until the next monthly ledger reconciliation unless a must-fix accounting, privacy, quote, or UI defect is found.
