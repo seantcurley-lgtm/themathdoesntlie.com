@@ -1,4 +1,13 @@
-# Covered Call Lab v2.5.0 — Production Release
+# Website v2.6.0 / Covered Call Lab v2.7.3 — Release Candidate
+
+- Integrates the August Fidelity ledger and Covered Call Lab v2.7.3.
+- Moves Finnhub calls into a central GitHub Action; no Finnhub token is shipped to browsers.
+- Publishes one shared S&P 500 + SCHD + benchmark market snapshot for all site modules.
+- Preserves editable investment-universe tags locally while using shared security identity and pricing.
+- Adds canonical URLs, `robots.txt`, and `sitemap.xml` for the Search Console duplicate-canonical issue.
+- Preserves Website v2.5 Substack integration and anonymized public portfolio labels.
+
+## Prior release: Covered Call Lab v2.5.0
 
 Release Date: July 2026
 

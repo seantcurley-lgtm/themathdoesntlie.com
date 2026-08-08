@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Release Notes | The Math Doesn't Lie</title>
   <meta name="description" content="Release notes and version history for The Math Doesn't Lie website." />
+  <link rel="canonical" href="https://themathdoesntlie.com/release-notes.html" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 </head>
@@ -26,8 +27,23 @@
 
   <main class="page-shell">
     <p class="eyebrow">Release Notes</p>
-    <h1>The Math Doesn't Lie — Covered Call Lab v2.5.0 Production</h1>
-    <p class="page-intro">This release promotes the Covered Call Lab hybrid valuation architecture to production. The June 30, 2026 ledger is the active audited ledger; market-sensitive values update from live quote refreshes.</p>
+    <h1>The Math Doesn't Lie — Website v2.6.0</h1>
+    <p class="page-intro">Website v2.6.0 integrates Covered Call Lab v2.7.3, the August Fidelity ledger, and a shared GitHub-managed market-data architecture while preserving the v2.5 Substack publishing integration.</p>
+
+    <section class="content-card">
+      <h2>Website v2.6.0 · Covered Call Lab v2.7.3</h2>
+      <p><strong>Status:</strong> Release candidate.</p>
+      <ul>
+        <li>Covered Call Lab updated to the reconciled August ledger and v2.7.3 interface.</li>
+        <li>S&amp;P 500, SCHD, investment-universe, covered-call, and benchmark views share one ticker database.</li>
+        <li>Finnhub access moved out of public browser code and into a rate-limited GitHub Action using a repository secret.</li>
+        <li>Shared prices refresh centrally after market close; fundamental fields are maintained monthly.</li>
+        <li>Historical ledger summary adds month-by-month experiment commentary and distinguishes assignment from intentional sales.</li>
+        <li>Current holdings sort ahead of exited positions, then by total contribution.</li>
+        <li>Absolute canonical URLs, sitemap, and robots metadata added to address Google's duplicate-without-user-selected-canonical report.</li>
+        <li>Public portfolio labels remain anonymized.</li>
+      </ul>
+    </section>
 
     <section class="content-card">
       <h2>Production Release v2.5.0</h2>
@@ -64,6 +80,6 @@
     </section>
   </main>
 
-  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.5.0 · Covered Call Lab v2.5.0 Production</a></p></footer>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.6.0 · Covered Call Lab v2.7.3 Production</a></p></footer>
 </body>
 </html>
