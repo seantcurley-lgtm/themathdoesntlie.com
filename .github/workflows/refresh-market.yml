@@ -1,0 +1,39 @@
+name: Refresh shared market data
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 21:30 UTC = after the U.S. market close, Monday-Friday.
+    - cron: '30 21 * * 1-5'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-shared-market-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh Finnhub master snapshot
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: node scripts/refresh-market.mjs
+      - name: Publish changed market snapshot
+        run: |
+          if git diff --quiet -- covered-call-lab/market-data.json; then
+            echo "No market-data changes to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add covered-call-lab/market-data.json
+          git commit -m "Refresh shared market data"
+          git push
