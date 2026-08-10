@@ -1,10 +1,13 @@
-/* Covered Call Lab v2.7.5 — two-tier Finnhub market-data client. */
+/* Covered Call Lab v2.7.6 — priority holdings refresh plus resumable market maintenance. */
 (function(){
   const TAG_KEY='mdl.tags.v273',LIST_KEY='mdl.lists.v273',DB_KEY='mdl.market.v275';
-  const CURSOR_KEY='mdl.market.cursor.v275',PORTFOLIO_KEY='mdl.portfolio.refresh.v275';
+  const CURSOR_KEY='mdl.market.cursor.v276',PORTFOLIO_KEY='mdl.portfolio.refresh.v275';
+  const LEASE_KEY='mdl.market.lease.v276',HOLDINGS_BUSY_KEY='mdl.holdings.busy.v276',FAILED_KEY='mdl.market.failed.v276',COOLDOWN_KEY='mdl.market.cooldown.v276';
   const SNAPSHOT_URL='market-data.json',PROXY_CONFIG_URL='quote-proxy.json';
-  const REQUEST_GAP_MS=1250; // 48/minute: below the 60/minute Finnhub ceiling.
+  const REQUEST_GAP_MS=3000; // 20/minute leaves capacity for priority holdings and provider jitter.
+  const THROTTLE_COOLDOWN_MS=60000,LEASE_MS=15000;
   const HOLDINGS_RETRY_DELAYS_MS=[15000,30000];
+  const INSTANCE_ID=(globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`);
   const extras=[
     {ticker:'SCHD',name:'Schwab U.S. Dividend Equity ETF',sector:'ETF'},
     {ticker:'SPY',name:'SPDR S&P 500 ETF Trust',sector:'ETF'},
@@ -19,6 +22,16 @@
   function normalize(t){return String(t||'').trim().toUpperCase().replace('.','-')}
   function read(k,fallback){try{return JSON.parse(localStorage.getItem(k))??fallback}catch{return fallback}}
   function write(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
+  const backgroundFailures=new Set(read(FAILED_KEY,[]));state.backgroundFailed=backgroundFailures.size;
+  function persistFailures(){write(FAILED_KEY,[...backgroundFailures]);state.backgroundFailed=backgroundFailures.size}
+  function holdingsBusy(){return Number(read(HOLDINGS_BUSY_KEY,0))>Date.now()}
+  function markHoldingsBusy(){write(HOLDINGS_BUSY_KEY,Date.now()+120000)}
+  function clearHoldingsBusy(){write(HOLDINGS_BUSY_KEY,0)}
+  function backgroundCooldownRemaining(){return Math.max(0,Number(read(COOLDOWN_KEY,0))-Date.now())}
+  function claimBackgroundLease(){let now=Date.now(),lease=read(LEASE_KEY,null);if(lease&&lease.owner!==INSTANCE_ID&&Number(lease.until)>now)return false;write(LEASE_KEY,{owner:INSTANCE_ID,until:now+LEASE_MS});return read(LEASE_KEY,null)?.owner===INSTANCE_ID}
+  function renewBackgroundLease(){write(LEASE_KEY,{owner:INSTANCE_ID,until:Date.now()+LEASE_MS})}
+  function releaseBackgroundLease(){let lease=read(LEASE_KEY,null);if(lease?.owner===INSTANCE_ID)write(LEASE_KEY,{owner:INSTANCE_ID,until:0})}
+  function isThrottle(error){return /(?:429|rate limit|throttl)/i.test(String(error?.message||error||''))}
   function tags(){return read(TAG_KEY,{})}
   function listCatalog(){return read(LIST_KEY,{sp500:{id:'sp500',name:'S&P 500',system:true},moat:{id:'moat',name:'Moat Universe',system:false},tactical:{id:'tactical',name:'Tactical',system:false},schd:{id:'schd',name:'SCHD Holdings',system:true},covered:{id:'covered',name:'Covered Call Holdings',system:true}})}
   function saveCatalog(v){write(LIST_KEY,v)}
@@ -49,34 +62,39 @@
   function queuedQuote(t,priority=false){const run=async()=>{if(!priority)await wait(REQUEST_GAP_MS);return rawQuote(t)};if(priority)return run();requestChain=requestChain.then(run,run);return requestChain}
   function saveQuote(t,price,at=new Date().toISOString()){let old=db[t]||{ticker:t,name:t,sector:'',inSP500:false};db[t]={...old,price,lastQuoteRefresh:at,lastRefresh:at,provider:'Finnhub'};persist()}
   function holdingsTickers(){return[...new Set(DATA.holdings.filter(h=>Number(h.shares)>0).map(h=>normalize(h.ticker)))]}
+  function benchmarkTickers(){return extras.map(x=>x.ticker)}
   async function refreshPortfolio(){
     if(state.portfolioRefreshing)return false;
-    clearTimeout(backgroundTimer);
+    clearTimeout(backgroundTimer);markHoldingsBusy();releaseBackgroundLease();
     const tickers=holdingsTickers(),current=new Set();state.portfolioRefreshing=true;state.portfolioDone=0;state.portfolioTotal=tickers.length;state.portfolioFailed=0;state.portfolioFailedTickers=[];state.portfolioStatus='Refreshing current holdings from Finnhub';notify();
     let pending=[...tickers];
     for(let round=0;pending.length&&round<=HOLDINGS_RETRY_DELAYS_MS.length;round++){
-      if(round){let delay=HOLDINGS_RETRY_DELAYS_MS[round-1];state.portfolioStatus=`Holdings refresh partial: ${current.size}/${tickers.length} current; retrying ${pending.join(', ')} in ${Math.round(delay/1000)}s`;state.portfolioActiveTicker='Retry scheduled';notify();await wait(delay);state.portfolioStatus=`Retrying failed holdings: ${pending.join(', ')}`;state.portfolioActiveTicker=pending[0]||'';notify()}
+      if(round){let delay=HOLDINGS_RETRY_DELAYS_MS[round-1];markHoldingsBusy();state.portfolioStatus=`Holdings refresh partial: ${current.size}/${tickers.length} current; retrying ${pending.join(', ')} in ${Math.round(delay/1000)}s`;state.portfolioActiveTicker='Retry scheduled';notify();await wait(delay);state.portfolioStatus=`Retrying failed holdings: ${pending.join(', ')}`;state.portfolioActiveTicker=pending[0]||'';notify()}
       let payload={quotes:{},failed:[]};try{payload=await proxyQuotes(pending)}catch(e){state.lastError=e.message;payload.failed=pending.map(t=>({ticker:t,error:e.message}))}
       const failed=[];for(const t of pending){state.portfolioActiveTicker=t;let q=payload.quotes?.[t];if(Number.isFinite(q?.price)&&q.price>0){saveQuote(t,q.price,q.retrievedAt);current.add(t)}else failed.push(t);state.portfolioDone=current.size;notify()}pending=failed;if(payload.failed?.length)state.lastError=payload.failed.map(x=>`${x.ticker}: ${x.error}`).join('; ')
     }
-    state.portfolioFailed=pending.length;state.portfolioFailedTickers=[...pending];state.portfolioDone=current.size;state.portfolioRefreshing=false;state.portfolioActiveTicker='';if(!pending.length){state.lastPortfolioRefresh=new Date().toISOString();write(PORTFOLIO_KEY,state.lastPortfolioRefresh);state.portfolioStatus=`Holdings refresh successful: ${current.size}/${tickers.length} current`}else if(current.size){state.portfolioStatus=`Holdings refresh stopped partial after automatic retries: ${current.size}/${tickers.length} current; stale ${pending.join(', ')}`}else state.portfolioStatus=`Holdings refresh failed after automatic retries: ${state.lastError}`;notify();scheduleBackground(1500);return pending.length===0;
+    state.portfolioFailed=pending.length;state.portfolioFailedTickers=[...pending];state.portfolioDone=current.size;state.portfolioRefreshing=false;state.portfolioActiveTicker='';clearHoldingsBusy();if(!pending.length){state.lastPortfolioRefresh=new Date().toISOString();write(PORTFOLIO_KEY,state.lastPortfolioRefresh);state.portfolioStatus=`Holdings refresh successful: ${current.size}/${tickers.length} current`}else if(current.size){state.portfolioStatus=`Holdings refresh stopped partial after automatic retries: ${current.size}/${tickers.length} current; stale ${pending.join(', ')}`}else state.portfolioStatus=`Holdings refresh failed after automatic retries: ${state.lastError}`;notify();scheduleBackground(5000);return pending.length===0;
   }
   function maintenanceTickers(){let tg=tags();return Object.keys(db).filter(t=>db[t].inSP500||tg[t]?.inSCHD||db[t].sector==='ETF').sort()}
   async function backgroundStep(){
-    if(state.portfolioRefreshing){scheduleBackground(500);return}
+    if(state.portfolioRefreshing||holdingsBusy()){state.backgroundStatus='Background paused for holdings refresh';notify();scheduleBackground(5000);return}
+    let cooldown=backgroundCooldownRemaining();if(cooldown){state.backgroundStatus=`Finnhub rate-limit cooldown · retrying in ${Math.ceil(cooldown/1000)}s`;notify();scheduleBackground(cooldown);return}
+    if(!claimBackgroundLease()){state.backgroundStatus='Background maintenance active in another tab';notify();scheduleBackground(5000);return}
     const all=maintenanceTickers();state.backgroundTotal=all.length;let cursor=read(CURSOR_KEY,0);if(cursor>=all.length){cursor=0;write(CURSOR_KEY,0)}let t=all[cursor];state.backgroundRefreshing=true;state.backgroundActiveTicker=t;state.backgroundDone=cursor;state.backgroundStatus=`Background maintenance ${cursor}/${all.length}`;notify();
-    try{let p=await queuedQuote(t,false);saveQuote(t,p);cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=cursor>=all.length?'Background price sweep complete':`Background maintenance ${cursor}/${all.length}`}
-    catch(e){state.backgroundFailed++;state.lastError=e.message;cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=`Background retained prior ${t} price after failure`}
-    finally{state.backgroundRefreshing=false;state.backgroundActiveTicker='';notify();if(cursor<all.length)scheduleBackground(250)}
+    let nextDelay=5000;
+    try{renewBackgroundLease();let p=await queuedQuote(t,false);saveQuote(t,p);backgroundFailures.delete(t);persistFailures();cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=cursor>=all.length?'Background price sweep complete':`Background maintenance ${cursor}/${all.length}`}
+    catch(e){state.lastError=e.message;if(isThrottle(e)){state.rateLimitHits++;nextDelay=THROTTLE_COOLDOWN_MS;write(COOLDOWN_KEY,Date.now()+nextDelay);state.backgroundStatus=`Finnhub rate-limit pause at ${cursor}/${all.length}; ${t} will retry`}else{backgroundFailures.add(t);persistFailures();cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=`Background retained prior ${t} price after failure`}}
+    finally{state.backgroundRefreshing=false;state.backgroundActiveTicker='';notify();if(cursor<all.length)scheduleBackground(nextDelay);else releaseBackgroundLease()}
   }
   function scheduleBackground(delay=1500){clearTimeout(backgroundTimer);backgroundTimer=setTimeout(backgroundStep,delay)}
   function get(t){return db[normalize(t)]||null}function getDb(){return db}
   function investmentRows(){let tg=syncTags();return Object.values(tg).filter(x=>x.active).map(x=>({...db[x.ticker],...x})).sort((a,b)=>a.ticker.localeCompare(b.ticker))}
   function schdRows(){let tg=tags();return Object.values(tg).filter(x=>x.inSCHD).map(x=>({...db[x.ticker],...x})).sort((a,b)=>a.ticker.localeCompare(b.ticker))}
   function sp500Rows(){return Object.values(db).filter(x=>x.inSP500).sort((a,b)=>a.ticker.localeCompare(b.ticker))}
-  function status(){return{...state,rpm:48,sp500Count:sp500Rows().length,marketCount:Object.keys(db).length,lastStoredRefresh:state.lastPortfolioRefresh?Date.parse(state.lastPortfolioRefresh):0,lastPriceSweepCompletedAt:read(CURSOR_KEY,0)>=maintenanceTickers().length?new Date().toISOString():null,snapshotGeneratedAt:snapshotMeta.generatedAt||null}}
+  function status(){return{...state,rpm:20,sp500Count:sp500Rows().length,marketCount:Object.keys(db).length,lastStoredRefresh:state.lastPortfolioRefresh?Date.parse(state.lastPortfolioRefresh):0,lastPriceSweepCompletedAt:read(CURSOR_KEY,0)>=maintenanceTickers().length?new Date().toISOString():null,snapshotGeneratedAt:snapshotMeta.generatedAt||null}}
   function forEvidence(t){let r=get(t);return r?{ticker:r.ticker,name:r.name,price:r.price,marketCap:r.marketCap,sharesOutstanding:r.sharesOutstanding,dividendYield:r.dividendYield,lastMarketRefresh:r.lastQuoteRefresh||r.lastRefresh}:null}
   function batchForEvidence(tickers){return[...new Set((tickers||[]).map(normalize))].map(forEvidence).filter(Boolean)}
-  seed();window.MDLMarket={get,getDb,sp500Rows,investmentRows,schdRows,tags,updateTag,addUniverse,removeUniverse,listCatalog,createList,setMembership,refreshPortfolio,refreshMarket:refreshPortfolio,maintenanceTickers,holdingsTickers,hasToken:()=>Boolean(proxyEndpoint),status,syncTags,forEvidence,batchForEvidence,loadSnapshot,loadProxyConfig,_test:{saveQuote,backgroundStep,rawQuote,proxyQuotes}};
+  seed();window.MDLMarket={get,getDb,sp500Rows,investmentRows,schdRows,tags,updateTag,addUniverse,removeUniverse,listCatalog,createList,setMembership,refreshPortfolio,refreshMarket:refreshPortfolio,maintenanceTickers,holdingsTickers,benchmarkTickers,hasToken:()=>Boolean(proxyEndpoint),status,syncTags,forEvidence,batchForEvidence,loadSnapshot,loadProxyConfig,_test:{saveQuote,backgroundStep,rawQuote,proxyQuotes,claimBackgroundLease,isThrottle}};
   window.addEventListener('load',()=>Promise.allSettled([loadSnapshot(false),loadProxyConfig()]).then(results=>{if(results[0].status==='rejected'){state.lastError=results[0].reason.message;state.backgroundStatus='Using persisted/browser ledger prices; shared snapshot unavailable'}if(results[1].status==='rejected'){state.lastError=results[1].reason.message;state.backgroundStatus='Quote gateway unavailable'}notify();scheduleBackground(60000)}),{once:true});
+  window.addEventListener('beforeunload',releaseBackgroundLease);
 })();
