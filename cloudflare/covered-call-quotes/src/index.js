@@ -40,6 +40,10 @@ async function getQuote(ticker, env, cache) {
   return { ticker, ...body, cached: false };
 }
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get('origin') || '';
@@ -61,13 +65,13 @@ export default {
     const rejected = symbols.filter(t => !allowed.has(t));
     if (rejected.length) return json({ error: 'Ticker not in approved universe', rejected }, 400, permittedOrigin);
 
-    const cache = caches.default;
-    const settled = await Promise.allSettled(symbols.map(t => getQuote(t, env, cache)));
     const quotes = {}, failed = [];
-    settled.forEach((result, i) => {
-      if (result.status === 'fulfilled') quotes[symbols[i]] = result.value;
-      else failed.push({ ticker: symbols[i], error: result.reason?.message || 'Quote failed' });
-    });
+    const cache = caches.default;
+    for (let i = 0; i < symbols.length; i++) {
+      if (i) await wait(1100);
+      try { quotes[symbols[i]] = await getQuote(symbols[i], env, cache); }
+      catch (error) { failed.push({ ticker: symbols[i], error: error?.message || 'Quote failed' }); }
+    }
     return json({ quotes, failed, retrievedAt: new Date().toISOString() }, Object.keys(quotes).length ? 200 : 502, permittedOrigin);
   }
 };
