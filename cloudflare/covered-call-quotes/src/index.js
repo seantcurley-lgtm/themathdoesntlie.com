@@ -29,7 +29,12 @@ async function getQuote(ticker, env, cache) {
   if (cached) return { ticker, ...(await cached.json()), cached: true };
 
   const target = `${FINNHUB_QUOTE_URL}?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(env.FINNHUB_API_KEY)}`;
-  const response = await fetch(target, { headers: { accept: 'application/json' } });
+  let response;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(target, { headers: { accept: 'application/json' } });
+    if (response.status !== 429 || attempt === 2) break;
+    await wait(1500 * (attempt + 1));
+  }
   if (!response.ok) throw new Error(`Finnhub HTTP ${response.status}`);
   const quote = await response.json();
   if (!Number.isFinite(quote.c) || quote.c <= 0) throw new Error(quote.error || 'No current price');
