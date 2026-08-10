@@ -78,3 +78,11 @@ function enhanceRenderedPage(){
 function render(){nav();modeUI();let p=pages.find(x=>x[0]===page);document.getElementById('title').textContent=p[1];document.getElementById('sub').textContent=p[2];let views={dashboard:dashboard,holdings:holdingsPage,calls:callsPageV271,universe:universePageV27,schd:schdPageV271,benchmarks:benchmarksPage,methodology:methodology,sandbox:sandboxPage,marketdb:marketDbPageV273};document.getElementById('view').innerHTML=views[page]();enhanceRenderedPage()}
 let marketRenderTimer=null;window.addEventListener('mdl-market-state',e=>{let s=e.detail||{},snapshotLoaded=market.has(page)&&Boolean(s.snapshotGeneratedAt),shouldRender=page==='marketdb'||s.portfolioRefreshing||snapshotLoaded||String(s.portfolioStatus||'').includes('complete');if(!shouldRender||marketRenderTimer)return;marketRenderTimer=setTimeout(()=>{marketRenderTimer=null;render()},250)});
 render();
+// V2.7.4: install the redraw listener first, then explicitly load a no-cache shared snapshot.
+// This avoids relying on a window load event that may already have fired.
+if(window.MDLMarket){
+  MDLMarket.loadSnapshot(true).catch(e=>{
+    quoteStatus='Shared market snapshot unavailable: '+e.message;
+    render();
+  });
+}
