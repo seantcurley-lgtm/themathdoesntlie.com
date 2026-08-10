@@ -1,4 +1,4 @@
-/* Covered Call Lab v2.7.6 — priority holdings refresh plus resumable market maintenance. */
+/* Covered Call Lab v2.7.7 — priority holdings refresh plus resumable market maintenance. */
 (function(){
   const TAG_KEY='mdl.tags.v273',LIST_KEY='mdl.lists.v273',DB_KEY='mdl.market.v275';
   const CURSOR_KEY='mdl.market.cursor.v276',PORTFOLIO_KEY='mdl.portfolio.refresh.v275';
@@ -81,7 +81,9 @@
     let cooldown=backgroundCooldownRemaining();if(cooldown){state.backgroundStatus=`Finnhub rate-limit cooldown · retrying in ${Math.ceil(cooldown/1000)}s`;notify();scheduleBackground(cooldown);return}
     if(!claimBackgroundLease()){state.backgroundStatus='Background maintenance active in another tab';notify();scheduleBackground(5000);return}
     const all=maintenanceTickers();state.backgroundTotal=all.length;let cursor=read(CURSOR_KEY,0);if(cursor>=all.length){cursor=0;write(CURSOR_KEY,0)}let t=all[cursor];state.backgroundRefreshing=true;state.backgroundActiveTicker=t;state.backgroundDone=cursor;state.backgroundStatus=`Background maintenance ${cursor}/${all.length}`;notify();
-    let nextDelay=5000;
+    // queuedQuote already enforces the 3-second provider gap. Keep the follow-up
+    // timer short so the sweep actually approaches the 20/minute guardrail.
+    let nextDelay=100;
     try{renewBackgroundLease();let p=await queuedQuote(t,false);saveQuote(t,p);backgroundFailures.delete(t);persistFailures();cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=cursor>=all.length?'Background price sweep complete':`Background maintenance ${cursor}/${all.length}`}
     catch(e){state.lastError=e.message;if(isThrottle(e)){state.rateLimitHits++;nextDelay=THROTTLE_COOLDOWN_MS;write(COOLDOWN_KEY,Date.now()+nextDelay);state.backgroundStatus=`Finnhub rate-limit pause at ${cursor}/${all.length}; ${t} will retry`}else{backgroundFailures.add(t);persistFailures();cursor++;write(CURSOR_KEY,cursor);state.backgroundDone=cursor;state.backgroundStatus=`Background retained prior ${t} price after failure`}}
     finally{state.backgroundRefreshing=false;state.backgroundActiveTicker='';notify();if(cursor<all.length)scheduleBackground(nextDelay);else releaseBackgroundLease()}

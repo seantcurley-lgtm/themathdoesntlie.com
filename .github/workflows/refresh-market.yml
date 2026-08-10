@@ -3,8 +3,8 @@ name: Refresh shared market data
 on:
   workflow_dispatch:
   schedule:
-    # 21:30 UTC = after the U.S. market close, Monday-Friday.
-    - cron: '30 21 * * 1-5'
+    # Overnight UTC window keeps the seed refresh away from normal browser use.
+    - cron: '30 9 * * 1-5'
 
 permissions:
   contents: write
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

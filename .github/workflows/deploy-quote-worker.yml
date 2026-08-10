@@ -46,7 +46,7 @@ jobs:
           DEPLOY_OUTPUT="$(npx wrangler deploy 2>&1 | tee /dev/stderr)"
           WORKER_URL="$(printf '%s' "$DEPLOY_OUTPUT" | grep -Eo 'https://[^[:space:]]+\.workers\.dev' | tail -1)"
           test -n "$WORKER_URL"
-          printf '{"endpoint":"%s","version":"2.7.5"}\n' "$WORKER_URL" > ../../covered-call-lab/quote-proxy.json
+          printf '{"endpoint":"%s","version":"2.7.7"}\n' "$WORKER_URL" > ../../covered-call-lab/quote-proxy.json
       - name: Publish endpoint configuration
         run: |
           if git diff --quiet -- covered-call-lab/quote-proxy.json; then exit 0; fi

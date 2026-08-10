@@ -61,7 +61,7 @@ export default {
     if (origin && origin !== permittedOrigin) return json({ error: 'Origin not allowed' }, 403, permittedOrigin);
 
     const url = new URL(request.url);
-    if (url.pathname === '/health') return json({ ok: true, service: 'covered-call-quotes', version: '2.7.5' }, 200, permittedOrigin);
+    if (url.pathname === '/health') return json({ ok: true, service: 'covered-call-quotes', version: '2.7.7' }, 200, permittedOrigin);
     if (url.pathname !== '/quotes') return json({ error: 'Not found' }, 404, permittedOrigin);
     if (!env.FINNHUB_API_KEY) return json({ error: 'Quote provider unavailable' }, 503, permittedOrigin);
 

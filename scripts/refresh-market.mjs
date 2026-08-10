@@ -7,7 +7,7 @@ const ROOT=path.resolve(import.meta.dirname,'..');
 const LAB=path.join(ROOT,'covered-call-lab');
 const OUT=path.join(LAB,'market-data.json');
 const API='https://finnhub.io/api/v1';
-const CALL_GAP_MS=1200; // 50 calls/minute, below Finnhub's 60/minute free-tier ceiling.
+const CALL_GAP_MS=3000; // Match the browser's conservative 20 calls/minute guardrail.
 const FUNDAMENTAL_TTL_MS=30*24*60*60*1000;
 const token=process.env.FINNHUB_API_KEY||'';
 const seedOnly=process.argv.includes('--seed-only');
@@ -43,7 +43,7 @@ const rows=[...universe.values()].sort((a,b)=>a.ticker.localeCompare(b.ticker)).
 }));
 
 function save(meta={}){
-  const payload={meta:{provider:'Finnhub',rpmLimit:50,universeCount:rows.length,...previous.meta,...meta,generatedAt:new Date().toISOString()},securities:rows};
+  const payload={meta:{provider:'Finnhub',rpmLimit:20,universeCount:rows.length,...previous.meta,...meta,generatedAt:new Date().toISOString()},securities:rows};
   fs.writeFileSync(OUT,JSON.stringify(payload,null,2)+'\n');
   previous=payload;
 }
@@ -63,7 +63,7 @@ async function api(endpoint,retry=0){
 }
 
 let quoteFailures=0;
-console.log(`Refreshing ${rows.length} securities at 50 calls/minute.`);
+console.log(`Refreshing ${rows.length} securities at 20 calls/minute.`);
 for(let i=0;i<rows.length;i++){
   const row=rows[i];
   try{
