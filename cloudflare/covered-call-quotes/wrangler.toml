@@ -1,0 +1,7 @@
+name = "covered-call-quotes"
+main = "src/index.js"
+compatibility_date = "2026-08-10"
+
+[vars]
+ALLOWED_ORIGIN = "https://themathdoesntlie.com"
+QUOTE_CACHE_SECONDS = "45"
