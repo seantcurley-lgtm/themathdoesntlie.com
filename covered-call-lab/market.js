@@ -4,6 +4,7 @@
   const CURSOR_KEY='mdl.market.cursor.v275',PORTFOLIO_KEY='mdl.portfolio.refresh.v275';
   const SNAPSHOT_URL='market-data.json',PROXY_CONFIG_URL='quote-proxy.json';
   const REQUEST_GAP_MS=1250; // 48/minute: below the 60/minute Finnhub ceiling.
+  const HOLDINGS_RETRY_DELAYS_MS=[15000,30000];
   const extras=[
     {ticker:'SCHD',name:'Schwab U.S. Dividend Equity ETF',sector:'ETF'},
     {ticker:'SPY',name:'SPDR S&P 500 ETF Trust',sector:'ETF'},
@@ -50,9 +51,15 @@
   function holdingsTickers(){return[...new Set(DATA.holdings.filter(h=>Number(h.shares)>0).map(h=>normalize(h.ticker)))]}
   async function refreshPortfolio(){
     if(state.portfolioRefreshing)return false;
-    const tickers=holdingsTickers();state.portfolioRefreshing=true;state.portfolioDone=0;state.portfolioTotal=tickers.length;state.portfolioFailed=0;state.portfolioFailedTickers=[];state.portfolioStatus='Refreshing current holdings from Finnhub';notify();
-    let ok=0;try{let payload=await proxyQuotes(tickers);for(const t of tickers){state.portfolioActiveTicker=t;let q=payload.quotes?.[t];if(Number.isFinite(q?.price)&&q.price>0){saveQuote(t,q.price,q.retrievedAt);ok++}else{state.portfolioFailed++;state.portfolioFailedTickers.push(t)}state.portfolioDone++;notify()}if(payload.failed?.length)state.lastError=payload.failed.map(x=>`${x.ticker}: ${x.error}`).join('; ')}catch(e){state.portfolioFailed=tickers.length;state.portfolioFailedTickers=[...tickers];state.portfolioDone=tickers.length;state.lastError=e.message}
-    state.portfolioRefreshing=false;state.portfolioActiveTicker='';if(ok){state.lastPortfolioRefresh=new Date().toISOString();write(PORTFOLIO_KEY,state.lastPortfolioRefresh)}state.portfolioStatus=state.portfolioFailed?`Holdings refresh partial: ${ok}/${tickers.length} current; failed ${state.portfolioFailedTickers.join(', ')}`:`Holdings refresh successful: ${ok}/${tickers.length} current`;if(!ok)state.portfolioStatus=`Holdings refresh failed: ${state.lastError}`;notify();scheduleBackground(250);return state.portfolioFailed===0;
+    clearTimeout(backgroundTimer);
+    const tickers=holdingsTickers(),current=new Set();state.portfolioRefreshing=true;state.portfolioDone=0;state.portfolioTotal=tickers.length;state.portfolioFailed=0;state.portfolioFailedTickers=[];state.portfolioStatus='Refreshing current holdings from Finnhub';notify();
+    let pending=[...tickers];
+    for(let round=0;pending.length&&round<=HOLDINGS_RETRY_DELAYS_MS.length;round++){
+      if(round){let delay=HOLDINGS_RETRY_DELAYS_MS[round-1];state.portfolioStatus=`Holdings refresh partial: ${current.size}/${tickers.length} current; retrying ${pending.join(', ')} in ${Math.round(delay/1000)}s`;state.portfolioActiveTicker='Retry scheduled';notify();await wait(delay);state.portfolioStatus=`Retrying failed holdings: ${pending.join(', ')}`;state.portfolioActiveTicker=pending[0]||'';notify()}
+      let payload={quotes:{},failed:[]};try{payload=await proxyQuotes(pending)}catch(e){state.lastError=e.message;payload.failed=pending.map(t=>({ticker:t,error:e.message}))}
+      const failed=[];for(const t of pending){state.portfolioActiveTicker=t;let q=payload.quotes?.[t];if(Number.isFinite(q?.price)&&q.price>0){saveQuote(t,q.price,q.retrievedAt);current.add(t)}else failed.push(t);state.portfolioDone=current.size;notify()}pending=failed;if(payload.failed?.length)state.lastError=payload.failed.map(x=>`${x.ticker}: ${x.error}`).join('; ')
+    }
+    state.portfolioFailed=pending.length;state.portfolioFailedTickers=[...pending];state.portfolioDone=current.size;state.portfolioRefreshing=false;state.portfolioActiveTicker='';if(!pending.length){state.lastPortfolioRefresh=new Date().toISOString();write(PORTFOLIO_KEY,state.lastPortfolioRefresh);state.portfolioStatus=`Holdings refresh successful: ${current.size}/${tickers.length} current`}else if(current.size){state.portfolioStatus=`Holdings refresh stopped partial after automatic retries: ${current.size}/${tickers.length} current; stale ${pending.join(', ')}`}else state.portfolioStatus=`Holdings refresh failed after automatic retries: ${state.lastError}`;notify();scheduleBackground(1500);return pending.length===0;
   }
   function maintenanceTickers(){let tg=tags();return Object.keys(db).filter(t=>db[t].inSP500||tg[t]?.inSCHD||db[t].sector==='ETF').sort()}
   async function backgroundStep(){
