@@ -18,3 +18,6 @@
 .actionBtn{margin-top:10px}.rowActions{display:flex;gap:5px;flex-wrap:wrap}.rowActions button{padding:6px 8px;font-size:11px}.dangerBtn{border-color:rgba(255,107,107,.45)!important;color:#ffd2d2!important;background:rgba(255,107,107,.08)!important}
 .marketControls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px}.marketControls input{background:#0b1225;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px}.marketControls input[type=password]{min-width:260px}.marketControls input[type=number]{width:75px;margin-left:6px}.marketControls label{font-size:12px;color:var(--muted)}
 .progressBar{height:12px;background:#0b1225;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:12px 0}.progressBar span{display:block;height:100%;background:linear-gradient(90deg,#5578eb,#31d47a);transition:width .2s}.marketStatus{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.commentary{border-color:rgba(49,212,122,.35);background:rgba(49,212,122,.07)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.currentHistory{background:rgba(49,212,122,.055)}
