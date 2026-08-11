@@ -48,3 +48,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .empty-filter{padding:30px;text-align:center;color:var(--muted);font-weight:700}
 @media(max-width:1200px){.universe-controls{grid-template-columns:repeat(2,minmax(160px,1fr)) auto auto}}
 @media(max-width:720px){.universe-controls{grid-template-columns:1fr 1fr}.universe-controls label:first-child{grid-column:1/-1}.sort-direction,.secondaryAction{width:100%}}
+
+
+/* v2.9.0 — Full S&P 500 evidence research database */
+.market-research-controls{grid-template-columns:minmax(190px,1.3fr) repeat(6,minmax(125px,.72fr)) auto auto}
+.market-research-table{min-width:1260px}
+.market-research-card .pills{margin-top:0}
+.market-research-card .rowActions{min-width:190px}
+.market-research-card .rowActions button{white-space:nowrap}
+@media(max-width:1450px){.market-research-controls{grid-template-columns:repeat(4,minmax(150px,1fr)) auto auto}}
+@media(max-width:900px){.market-research-controls{grid-template-columns:repeat(2,minmax(145px,1fr))}.market-research-controls label:first-child{grid-column:1/-1}}
