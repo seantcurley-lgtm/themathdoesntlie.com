@@ -90,3 +90,43 @@ footer p { margin: 0; }
 
 .site-version a { color: rgba(255,255,255,.9); font-weight: 800; text-decoration: none; }
 .site-version a:hover { color: var(--accent); }
+.featured-tools-grid { display: grid; gap: 1.25rem; }
+
+.evidence-launch-page { max-width: 1080px; }
+.evidence-selector { display: grid; grid-template-columns: .85fr 1.15fr; gap: 2rem; margin-top: 2rem; padding: 2rem; color: white; background: linear-gradient(135deg, var(--navy), #0b3047); border-radius: var(--radius); box-shadow: var(--shadow); }
+.selector-copy h2, .integration-note h2 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.3rem); }
+.selector-copy p:last-child { color: rgba(255,255,255,.74); }
+.security-search { position: relative; align-self: center; }
+.security-search label { display: block; margin-bottom: .45rem; color: rgba(255,255,255,.74); font-size: .82rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.security-search input { width: 100%; min-height: 56px; padding: 0 1rem; border: 2px solid transparent; border-radius: 10px; font: inherit; font-size: 1rem; }
+.security-search input:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 4px rgba(94,224,179,.18); }
+.security-results { position: absolute; top: calc(100% + .4rem); left: 0; right: 0; z-index: 20; display: none; max-height: 360px; overflow-y: auto; padding: .4rem; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.security-results.open { display: block; }
+.security-results button { display: grid; grid-template-columns: 68px 1fr auto; gap: .75rem; width: 100%; padding: .75rem; border: 0; border-bottom: 1px solid var(--line); text-align: left; background: white; cursor: pointer; }
+.security-results button:hover, .security-results button:focus { background: rgba(94,224,179,.12); outline: 0; }
+.security-results small { color: var(--muted-ink); }
+.security-card { min-height: 170px; margin-top: 1.4rem; padding: 2rem; background: white; border: 1px solid var(--line); border-left: 6px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow); }
+.security-empty { min-height: 105px; display: grid; place-content: center; gap: .3rem; text-align: center; color: var(--muted-ink); }
+.security-empty strong { color: var(--ink); font-size: 1.25rem; }
+.security-empty.error strong { color: #9b342f; }
+.security-identity { display: flex; justify-content: space-between; gap: 1rem; }
+.security-identity h2 { margin: 0; font-size: 2rem; }
+.security-identity h2 span { margin-left: .35rem; color: var(--muted-ink); font-size: 1rem; font-weight: 600; }
+.security-identity p { margin: .25rem 0; color: var(--muted-ink); }
+.security-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+.security-badges span { align-self: flex-start; padding: .35rem .65rem; color: var(--blue); background: rgba(15,79,121,.09); border-radius: 999px; font-size: .78rem; font-weight: 800; }
+.security-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-top: 1.25rem; }
+.security-facts div { padding: 1rem; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.security-facts span, .security-facts strong { display: block; }
+.security-facts span { color: var(--muted-ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+.security-facts strong { margin-top: .3rem; }
+.security-action { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+.security-action div { display: grid; }
+.security-action span { color: var(--muted-ink); }
+.security-action.attention strong { color: #9a6619; }
+.integration-note { margin-top: 1.4rem; padding: 2rem; background: white; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.boundary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
+.boundary-grid article { display: grid; gap: .35rem; padding: 1.2rem; background: var(--paper); border-radius: 10px; }
+.boundary-grid span, .policy-freeze { color: var(--muted-ink); }
+.policy-freeze { margin: 1.2rem 0 0; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .92rem; }
+@media (max-width: 800px) { .evidence-selector, .security-facts, .boundary-grid { grid-template-columns: 1fr; } .security-identity, .security-action { align-items: stretch; flex-direction: column; } .security-badges { justify-content: flex-start; } }

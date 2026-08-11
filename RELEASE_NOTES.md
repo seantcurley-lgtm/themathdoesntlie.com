@@ -1,4 +1,14 @@
-# Website v2.6.0 / Covered Call Lab v2.7.3 — Release Candidate
+# Website v2.8.0 / Evidence Engine 6.5 Integration — Release Candidate
+
+- Adds the Evidence Engine as a native TMDL research tool.
+- Uses the existing shared S&P 500, SCHD, benchmark, and investment-universe market snapshot as the launch source of truth.
+- Passes ticker, company, reference price, observation date, and the exact TMDL snapshot URL into Evidence Engine 6.5.
+- Keeps SEC identity, filing acquisition, evidence resolution, calculations, coverage, scoring, and immutable records inside the Evidence Engine.
+- Preserves the complete Release 6.4 methodology. Inventory applicability, multi-class shares, and Gross Profit governance remain deferred.
+- Aligns Evidence Engine presentation with TMDL's navy and mint visual system.
+- Repairs the unresolved home-page merge state included in the 2.7.7 source package.
+
+## Prior release: Website v2.6.0 / Covered Call Lab v2.7.3
 
 - Integrates the August Fidelity ledger and Covered Call Lab v2.7.3.
 - Moves Finnhub calls into a central GitHub Action; no Finnhub token is shipped to browsers.
