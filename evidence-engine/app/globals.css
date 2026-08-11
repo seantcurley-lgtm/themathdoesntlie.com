@@ -21,8 +21,9 @@
   --gold-50: #fbf6eb;
   --red-700: #a43e39;
   --red-100: #f8deda;
-  --shadow-soft: 0 12px 32px rgba(24, 54, 49, 0.07);
-  --shadow-drawer: -20px 0 60px rgba(13, 34, 31, 0.22);
+  --shadow-soft: 0 18px 45px rgba(3, 26, 45, 0.12);
+  --shadow-drawer: -20px 0 60px rgba(3, 26, 45, 0.22);
+  --tmdl-accent: #5ee0b3;
 }
 
 * {
@@ -160,7 +161,7 @@ a {
 }
 
 .brand-block strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -270,7 +271,7 @@ a {
 
 .sidebar-context strong {
   margin-top: 7px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 20px;
   font-weight: 500;
 }
@@ -330,9 +331,61 @@ a {
   min-width: 0;
 }
 
-.topbar {
+.tmdl-site-header {
   position: sticky;
   top: 0;
+  z-index: 17;
+  min-height: 94px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 15px clamp(20px, 3vw, 42px);
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(3, 14, 26, 0.97);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.tmdl-site-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.tmdl-site-brand img {
+  display: block;
+  width: min(270px, 25vw);
+  height: 64px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.tmdl-site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(10px, 1.7vw, 25px);
+  font-size: 14px;
+}
+
+.tmdl-site-nav a {
+  padding: 8px 1px;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.84);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tmdl-site-nav a:hover,
+.tmdl-site-nav a[aria-current="page"] {
+  color: var(--tmdl-accent);
+  border-bottom-color: var(--tmdl-accent);
+}
+
+.topbar {
+  position: sticky;
+  top: 94px;
   z-index: 15;
   min-height: 73px;
   display: flex;
@@ -537,7 +590,7 @@ a {
 .view-intro h1 {
   margin: 0;
   color: var(--ink-950);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: clamp(31px, 3.2vw, 45px);
   font-weight: 500;
   letter-spacing: -0.025em;
@@ -574,7 +627,7 @@ a {
 }
 
 .evaluation-scorecard strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 25px;
   font-weight: 500;
 }
@@ -627,7 +680,7 @@ a {
 }
 
 .score-overview-value strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 52px;
   font-weight: 500;
   line-height: 1;
@@ -774,7 +827,7 @@ a {
 
 .score-family-card > strong {
   margin-top: 10px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 27px;
   font-weight: 500;
 }
@@ -820,7 +873,7 @@ a {
 .section-heading-row h2,
 .section-heading-row h3 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-weight: 500;
 }
 
@@ -945,7 +998,7 @@ a {
 }
 
 .family-name {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 14px;
   font-weight: 600;
 }
@@ -1012,7 +1065,7 @@ a {
 
 .metric-value {
   margin-top: 15px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: clamp(22px, 2.15vw, 30px);
   line-height: 1;
   white-space: nowrap;
@@ -1185,7 +1238,7 @@ a {
 }
 
 .catalog-count strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 34px;
   font-weight: 500;
 }
@@ -1439,7 +1492,7 @@ a {
 
 .input-panel-heading h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 17px;
   font-weight: 500;
 }
@@ -1524,7 +1577,7 @@ a {
 }
 
 .methodology-principle strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 15px;
   font-weight: 500;
 }
@@ -1827,7 +1880,7 @@ a {
 .scoring-policy-panel h2,
 .scoring-policy-panel h3 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-weight: 500;
 }
 
@@ -1871,7 +1924,7 @@ a {
 .principle-panel p {
   margin: 0;
   color: var(--ink-800);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 15px;
   line-height: 1.55;
 }
@@ -1897,7 +1950,7 @@ a {
 
 .method-family-heading h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 16px;
   font-weight: 500;
 }
@@ -2006,7 +2059,7 @@ a {
 .drawer-title-block h2 {
   max-width: 420px;
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 30px;
   font-weight: 500;
   line-height: 1.15;
@@ -2020,7 +2073,7 @@ a {
 }
 
 .drawer-value strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 35px;
   font-weight: 500;
 }
@@ -2236,11 +2289,17 @@ a {
   gap: 30px;
   align-items: center;
   padding: 34px;
-  border-radius: 13px;
-  color: #f5faf8;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  color: #ffffff;
   background:
-    radial-gradient(circle at 5% 10%, rgba(220, 181, 91, 0.17), transparent 34%),
-    linear-gradient(145deg, #194b45, #12332f);
+    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px),
+    radial-gradient(circle at 92% 18%, rgba(94, 224, 179, 0.24), transparent 28%),
+    linear-gradient(120deg, #031a2d 0%, #061426 58%, #0b3047 100%);
+  background-size: 48px 48px, 48px 48px, auto, auto;
   box-shadow: var(--shadow-soft);
 }
 
@@ -2248,23 +2307,23 @@ a {
   max-width: 720px;
   margin: 8px 0 12px;
   color: #fff;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(30px, 3.2vw, 48px);
-  font-weight: 500;
-  line-height: 1.04;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
+  font-size: clamp(32px, 3.5vw, 54px);
+  font-weight: 800;
+  line-height: 1.02;
   letter-spacing: -0.025em;
 }
 
 .acquisition-copy > p:last-child {
   max-width: 670px;
   margin: 0;
-  color: rgba(238, 247, 244, 0.72);
+  color: rgba(255, 255, 255, 0.84);
   font-size: 12px;
   line-height: 1.7;
 }
 
 .acquisition-hero .section-kicker {
-  color: #dfba6d;
+  color: var(--tmdl-accent);
 }
 
 .ticker-loader {
@@ -2378,7 +2437,7 @@ a {
 
 .filing-banner h2 {
   margin: 5px 0 8px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 26px;
   font-weight: 500;
 }
@@ -2705,7 +2764,7 @@ a {
 .market-evidence-heading h2,
 .mapping-panel-heading h2 {
   margin: 5px 0 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-geist-sans), "Segoe UI", Arial, sans-serif;
   font-size: 22px;
   font-weight: 500;
 }
@@ -3812,5 +3871,37 @@ a {
   .table-panel {
     break-inside: avoid;
     box-shadow: none;
+  }
+}
+
+@media (max-width: 1320px) {
+  .tmdl-site-nav a:nth-child(2),
+  .tmdl-site-nav a:nth-child(3),
+  .tmdl-site-nav a:nth-child(6) {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .tmdl-site-header {
+    min-height: 76px;
+    padding-block: 8px;
+  }
+
+  .tmdl-site-brand img {
+    width: min(240px, 54vw);
+    height: 58px;
+  }
+
+  .tmdl-site-nav a:not([aria-current="page"]) {
+    display: none;
+  }
+
+  .topbar {
+    top: 76px;
+  }
+
+  .mobile-nav {
+    top: 141px;
   }
 }
