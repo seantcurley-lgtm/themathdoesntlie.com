@@ -139,7 +139,7 @@ export default function SecAcquisition({
   const [tmdlContext] = useState(readTmdlMarketContext);
   const [ticker, setTicker] = useState(tmdlContext.ticker || "AAPL");
   const [acquisition, setAcquisition] = useState<AcquisitionResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(tmdlContext.ticker));
   const [error, setError] = useState("");
   const [sharePrice, setSharePrice] = useState(tmdlContext.price);
   const [marketDate, setMarketDate] = useState(tmdlContext.marketDate || todayUtc);
@@ -151,9 +151,6 @@ export default function SecAcquisition({
   useEffect(() => {
     if (!tmdlContext.ticker) return;
     let active = true;
-    setLoading(true);
-    setError("");
-    setAcquisition(null);
     void acquireSecCompany(tmdlContext.ticker)
       .then((body) => {
         if (!active) return;

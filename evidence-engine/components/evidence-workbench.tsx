@@ -1039,10 +1039,10 @@ export default function EvidenceWorkbench() {
   useEffect(() => {
     let active = true;
     const launchContext = parseTmdlMarketContext(window.location.search);
-    if (launchContext.ticker) setActiveView("acquire");
     const sample = cloneSample();
     void evaluateInputs(sample).then((nextResult) => {
       if (!active) return;
+      if (launchContext.ticker) setActiveView("acquire");
       setResult(nextResult as Evaluation);
       setRunning(false);
     });
