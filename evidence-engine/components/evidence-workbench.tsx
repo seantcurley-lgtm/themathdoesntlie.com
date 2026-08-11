@@ -1000,11 +1000,7 @@ function MetricDrawer({ metric, onClose }: { metric: Metric | null; onClose: () 
 export default function EvidenceWorkbench() {
   const [inputs, setInputs] = useState<InputMap>(cloneSample);
   const [result, setResult] = useState<Evaluation | null>(null);
-  const [activeView, setActiveView] = useState<(typeof navItems)[number][0]>(() =>
-    parseTmdlMarketContext(typeof window === "undefined" ? "" : window.location.search).ticker
-      ? "acquire"
-      : "overview",
-  );
+  const [activeView, setActiveView] = useState<(typeof navItems)[number][0]>("overview");
   const [familyFilter, setFamilyFilter] = useState("All families");
   const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1042,6 +1038,8 @@ export default function EvidenceWorkbench() {
 
   useEffect(() => {
     let active = true;
+    const launchContext = parseTmdlMarketContext(window.location.search);
+    if (launchContext.ticker) setActiveView("acquire");
     const sample = cloneSample();
     void evaluateInputs(sample).then((nextResult) => {
       if (!active) return;
