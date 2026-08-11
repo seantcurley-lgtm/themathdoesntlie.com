@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Evidence Engine | The Math Doesn't Lie</title>
+  <meta name="description" content="Launch governed company evaluations using TMDL's shared security and market-data universe." />
+  <link rel="canonical" href="https://themathdoesntlie.com/evidence-engine.html" />
+  <link rel="stylesheet" href="style.css?v=2.8.0" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="The Math Doesn't Lie home"><img class="brand-logo-full" src="logo-full.png" alt="The Math Doesn't Lie" /></a>
+    <nav aria-label="Primary navigation">
+      <a href="index.html">Home</a><a href="daily-brief.html">Executive Brief</a><a href="articles.html">Analysis</a><a href="tools.html" aria-current="page">Tools</a><a href="methodology.html">Methodology</a><a href="contact.html">Contact</a><a class="nav-cta" href="https://themathdoesntlie.substack.com/subscribe" target="_blank" rel="noopener noreferrer">Subscribe</a>
+    </nav>
+  </header>
+
+  <main class="page evidence-launch-page">
+    <p class="eyebrow">TMDL Evidence Engine · Release 6.5</p>
+    <h1>Start with the company record.</h1>
+    <p class="lede">TMDL supplies the shared security identity and dated market observation. The Evidence Engine independently retrieves the company's SEC filing, resolves the governed evidence, and publishes only what the record supports.</p>
+
+    <section class="evidence-selector" aria-labelledby="selector-heading">
+      <div class="selector-copy">
+        <p class="section-label">Shared universe</p>
+        <h2 id="selector-heading">Choose a security</h2>
+        <p>Search the S&amp;P 500, SCHD holdings, benchmarks, and TMDL investment universe from the same market database used throughout the site.</p>
+      </div>
+      <div class="security-search">
+        <label for="security-search">Ticker or company name</label>
+        <input id="security-search" type="search" autocomplete="off" placeholder="Try ABBV, Duke Energy, or Walmart" aria-controls="security-results" />
+        <div id="security-results" class="security-results" role="listbox" aria-label="Matching securities"></div>
+      </div>
+    </section>
+
+    <section id="security-card" class="security-card" aria-live="polite">
+      <div class="security-empty"><strong>Select a security to begin.</strong><span>The latest stored TMDL market snapshot will appear here before you continue.</span></div>
+    </section>
+
+    <section class="integration-note">
+      <div><p class="section-label">Governed boundary</p><h2>One market record. Independent filing evidence.</h2></div>
+      <div class="boundary-grid">
+        <article><strong>TMDL provides</strong><span>Ticker, company, sector, price, price date, market capitalization, and universe membership.</span></article>
+        <article><strong>Evidence Engine verifies</strong><span>SEC identity, latest 10-K, reporting period, facts, calculations, coverage, score, and immutable audit record.</span></article>
+      </div>
+      <p class="policy-freeze">Release 6.5 changes integration and presentation only. Inventory applicability, multi-class shares, and Gross Profit governance remain frozen at Release 6.4 policy.</p>
+    </section>
+  </main>
+  <footer><p>© 2026 The Math Doesn't Lie.</p><p>Informational purposes only. Not investment advice.</p><p class="site-version"><a href="release-notes.html">Website v2.8.0 · Evidence Engine 6.5 Integration</a></p></footer>
+  <script src="evidence-engine.js?v=2.8.0"></script>
+</body>
+</html>
