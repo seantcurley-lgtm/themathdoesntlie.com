@@ -1,7 +1,7 @@
 (function () {
   const DATA_URL = 'covered-call-lab/market-data.json';
   const SOURCE_URL = 'https://themathdoesntlie.com/covered-call-lab/market-data.json';
-  const ENGINE_URL = 'https://evidence-engine-workbench.solar-maple-1068.chatgpt.site/';
+  const ENGINE_URL = 'https://evidence.themathdoesntlie.com/';
   const input = document.getElementById('security-search');
   const results = document.getElementById('security-results');
   const card = document.getElementById('security-card');
