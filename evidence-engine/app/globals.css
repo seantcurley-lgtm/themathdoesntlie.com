@@ -3342,6 +3342,10 @@ a {
 }
 
 @media (max-width: 980px) {
+  .site-return {
+    display: none;
+  }
+
   .app-shell {
     display: block;
   }
