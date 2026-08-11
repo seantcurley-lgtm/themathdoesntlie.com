@@ -17,8 +17,9 @@ export const metadata: Metadata = {
   description:
     "A deterministic, source-linked company evaluation engine integrated with The Math Doesn't Lie.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/favicon.svg?v=6.5.2",
+    shortcut: "/favicon.svg?v=6.5.2",
+    apple: "/favicon.svg?v=6.5.2",
   },
 };
 
