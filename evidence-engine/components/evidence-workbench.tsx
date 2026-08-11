@@ -1277,12 +1277,25 @@ export default function EvidenceWorkbench() {
         </div>
 
         <div className="sidebar-footer">
-          <span>Integration 6.5.1 · Engine core {ENGINE_VERSION}</span>
+          <span>Integration 6.5.2 · Engine core {ENGINE_VERSION}</span>
           <small>Objective evidence · Not investment advice</small>
         </div>
       </aside>
 
       <section className="workspace">
+        <header className="tmdl-site-header">
+          <a className="tmdl-site-brand" href="https://themathdoesntlie.com/" aria-label="The Math Doesn't Lie home">
+            <img src="https://themathdoesntlie.com/logo-full.png" alt="The Math Doesn't Lie" />
+          </a>
+          <nav className="tmdl-site-nav" aria-label="The Math Doesn't Lie navigation">
+            <a href="https://themathdoesntlie.com/">Home</a>
+            <a href="https://themathdoesntlie.com/daily-brief.html">Executive Brief</a>
+            <a href="https://themathdoesntlie.com/articles.html">Analysis</a>
+            <a href="https://themathdoesntlie.com/tools.html" aria-current="page">Tools</a>
+            <a href="https://themathdoesntlie.com/methodology.html">Methodology</a>
+            <a href="https://themathdoesntlie.com/contact.html">Contact</a>
+          </nav>
+        </header>
         <header className="topbar">
           <a className="site-return" href="https://themathdoesntlie.com/evidence-engine.html">← TMDL website</a>
           <div className="mobile-brand">TMDL <span>Evidence Engine</span></div>
