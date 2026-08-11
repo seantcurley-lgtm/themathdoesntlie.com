@@ -1277,7 +1277,7 @@ export default function EvidenceWorkbench() {
         </div>
 
         <div className="sidebar-footer">
-          <span>Engine {ENGINE_VERSION}</span>
+          <span>Integration 6.5.1 · Engine core {ENGINE_VERSION}</span>
           <small>Objective evidence · Not investment advice</small>
         </div>
       </aside>
