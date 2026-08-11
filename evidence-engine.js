@@ -1,7 +1,7 @@
 (function () {
   const DATA_URL = 'covered-call-lab/market-data.json';
   const SOURCE_URL = 'https://themathdoesntlie.com/covered-call-lab/market-data.json';
-  const ENGINE_URL = 'https://evidence.themathdoesntlie.com/';
+  const ENGINE_URL = 'https://tmdl-evidence-engine.sean-t-curley.workers.dev/';
   const input = document.getElementById('security-search');
   const results = document.getElementById('security-results');
   const card = document.getElementById('security-card');

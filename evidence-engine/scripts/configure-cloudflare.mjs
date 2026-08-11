@@ -7,9 +7,7 @@ config.name = "tmdl-evidence-engine";
 config.topLevelName = "tmdl-evidence-engine";
 config.compatibility_date = "2026-08-11";
 config.compatibility_flags = ["nodejs_compat"];
-config.routes = [
-  { pattern: "evidence.themathdoesntlie.com", custom_domain: true },
-];
+delete config.routes;
 
 // The public release deliberately has no cloud record store. Evaluation,
 // SEC acquisition, browser drafts, and exports remain available, while the
