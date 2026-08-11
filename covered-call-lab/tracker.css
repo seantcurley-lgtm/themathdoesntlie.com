@@ -21,3 +21,30 @@
 .commentary{border-color:rgba(49,212,122,.35);background:rgba(49,212,122,.07)}
 button:disabled{opacity:.5;cursor:not-allowed}
 .currentHistory{background:rgba(49,212,122,.055)}
+
+/* v2.8.0 — Evidence census research controls */
+.universe-research-card{padding:0;overflow:hidden}
+.universe-controls{display:grid;grid-template-columns:minmax(170px,1.2fr) repeat(3,minmax(145px,.8fr)) auto auto;gap:10px;align-items:end;padding:18px;border-bottom:1px solid var(--line);background:rgba(7,12,25,.42)}
+.universe-controls label{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.universe-controls input,.universe-controls select{width:100%;min-height:38px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:600 12px Inter,system-ui,sans-serif;text-transform:none;letter-spacing:0}
+.sort-direction,.secondaryAction{min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-weight:800;cursor:pointer}
+.sort-direction{min-width:42px;color:var(--accent);font-size:18px}
+.universe-table-wrap{overflow-x:auto}
+.universe-research-table{min-width:1180px;margin:0}
+.universe-research-table thead button{padding:0;border:0;color:inherit;background:transparent;font:inherit;cursor:pointer}
+.universe-research-table thead button:hover{color:var(--accent);text-decoration:underline}
+.universe-research-table td{vertical-align:middle}
+.cell-subtext{display:block;margin-top:3px;color:var(--muted);font-size:10px;font-weight:500;line-height:1.35}
+.evidence-state{display:inline-flex;min-width:92px;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--chip);color:var(--muted);font-size:10px;font-weight:800;line-height:1.15}
+.evidence-state strong{color:var(--ink);font-size:18px;line-height:1}
+.evidence-state small{color:inherit;font-size:8px;font-weight:700}
+.evidence-state.scored{border-color:rgba(49,212,122,.55);background:rgba(49,212,122,.12);color:#71e7a7}
+.evidence-state.withheld{border-color:rgba(255,209,102,.52);background:rgba(255,209,102,.1);color:#ffd166}
+.evidence-state.excluded{border-color:#3a4968;background:rgba(149,163,189,.1);color:#b9c5d9}
+.evidence-state.failed{border-color:rgba(255,107,107,.52);background:rgba(255,107,107,.1);color:#ff8d8d}
+.evidence-state.missing{border-style:dashed}
+.rowActions a.evidence-link{display:inline-flex;align-items:center;min-height:29px;padding:0 9px;border:1px solid var(--accent);border-radius:6px;background:var(--accent);color:#0b1020;font-size:10px;font-weight:800;text-decoration:none}
+.rowActions a.evidence-link:hover{filter:brightness(1.1);color:#0b1020}
+.empty-filter{padding:30px;text-align:center;color:var(--muted);font-weight:700}
+@media(max-width:1200px){.universe-controls{grid-template-columns:repeat(2,minmax(160px,1fr)) auto auto}}
+@media(max-width:720px){.universe-controls{grid-template-columns:1fr 1fr}.universe-controls label:first-child{grid-column:1/-1}.sort-direction,.secondaryAction{width:100%}}
