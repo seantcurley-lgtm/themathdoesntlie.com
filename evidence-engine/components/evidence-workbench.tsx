@@ -19,6 +19,7 @@ import { GENERAL_OPERATING_COMPANY_PROFILE } from "@/lib/evidence-scoring.mjs";
 import { CANONICAL_REGISTRY_VERSION } from "@/lib/canonical-registry.mjs";
 import { CALCULATION_REGISTRY_VERSION } from "@/lib/calculation-registry.mjs";
 import { ALIAS_REGISTRY_VERSION } from "@/lib/alias-registry.mjs";
+import { parseTmdlMarketContext } from "@/lib/tmdl-context.mjs";
 
 type InputMap = Record<string, string | number | null>;
 type LineageItem = {
@@ -999,7 +1000,11 @@ function MetricDrawer({ metric, onClose }: { metric: Metric | null; onClose: () 
 export default function EvidenceWorkbench() {
   const [inputs, setInputs] = useState<InputMap>(cloneSample);
   const [result, setResult] = useState<Evaluation | null>(null);
-  const [activeView, setActiveView] = useState<(typeof navItems)[number][0]>("overview");
+  const [activeView, setActiveView] = useState<(typeof navItems)[number][0]>(() =>
+    parseTmdlMarketContext(typeof window === "undefined" ? "" : window.location.search).ticker
+      ? "acquire"
+      : "overview",
+  );
   const [familyFilter, setFamilyFilter] = useState("All families");
   const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1238,13 +1243,13 @@ export default function EvidenceWorkbench() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand-block">
-          <span className="brand-mark">TMDL</span>
+        <a className="brand-block" href="https://themathdoesntlie.com/" aria-label="Return to The Math Doesn't Lie">
+          <img className="tmdl-brand-icon" src="/favicon.svg" alt="" />
           <div>
             <strong>Evidence Engine</strong>
-            <span>Evaluation workbench</span>
+            <span>The Math Doesn't Lie</span>
           </div>
-        </div>
+        </a>
 
         <nav className="primary-nav" aria-label="Workbench sections">
           {navItems.map(([id, label, description]) => (
@@ -1281,6 +1286,7 @@ export default function EvidenceWorkbench() {
 
       <section className="workspace">
         <header className="topbar">
+          <a className="site-return" href="https://themathdoesntlie.com/evidence-engine.html">← TMDL website</a>
           <div className="mobile-brand">TMDL <span>Evidence Engine</span></div>
           <div className="topbar-context">
             <span className="ticker-chip">{inputs.ticker || "—"}</span>
