@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { acquireSecCompany } from "@/lib/sec-client.mjs";
 import {
   applyEvidenceResolutionDecisions,
@@ -147,6 +147,36 @@ export default function SecAcquisition({
   const [reviewer, setReviewer] = useState("");
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, ReviewDraft>>({});
   const [reviewError, setReviewError] = useState("");
+
+  useEffect(() => {
+    if (!tmdlContext.ticker) return;
+    let active = true;
+    setLoading(true);
+    setError("");
+    setAcquisition(null);
+    void acquireSecCompany(tmdlContext.ticker)
+      .then((body) => {
+        if (!active) return;
+        setTicker(tmdlContext.ticker);
+        setAcquisition(body as AcquisitionResponse);
+        setSharePrice(tmdlContext.price);
+        setMarketUrl(tmdlContext.marketUrl);
+        setMarketDate(tmdlContext.marketDate || todayUtc());
+        setReviewer("");
+        setReviewDrafts({});
+        setReviewError("");
+      })
+      .catch((cause) => {
+        if (!active) return;
+        setError(cause instanceof Error ? cause.message : "SEC evidence acquisition failed.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [tmdlContext]);
 
   const loadTicker = async (event: FormEvent) => {
     event.preventDefault();
