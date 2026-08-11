@@ -1245,7 +1245,7 @@ export default function EvidenceWorkbench() {
           <img className="tmdl-brand-icon" src="/favicon.svg" alt="" />
           <div>
             <strong>Evidence Engine</strong>
-            <span>The Math Doesn't Lie</span>
+            <span>The Math Doesn&apos;t Lie</span>
           </div>
         </a>
 
