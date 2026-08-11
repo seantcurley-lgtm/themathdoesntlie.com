@@ -15,10 +15,7 @@ const loaderSource = `
 `;
 register(`data:text/javascript,${encodeURIComponent(loaderSource)}`, import.meta.url);
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-
-test("renders development preview metadata", async () => {
+test("renders the public TMDL workbench shell", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
@@ -44,7 +41,8 @@ test("renders development preview metadata", async () => {
     /^text\/html\b/i,
   );
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
+  assert.match(html, /<title>Evidence Engine \| The Math Doesn&#x27;t Lie<\/title>/);
+  assert.match(html, /Return to The Math Doesn&#x27;t Lie/);
   assert.doesNotMatch(html, />History</);
   assert.match(html, /Public mode · local exports/);
   assert.match(html, />Scoring</);

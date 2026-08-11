@@ -13,12 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TMDL Evidence Engine",
+  title: "Evidence Engine | The Math Doesn't Lie",
   description:
     "A deterministic, source-linked company evaluation engine integrated with The Math Doesn't Lie.",
-  other: {
-    "codex-preview": "development",
-  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
