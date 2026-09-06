@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const context = {};
+context.window=context;
 vm.createContext(context);
-for (const file of ['covered-call-lab/data.js','covered-call-lab/release-2.7.js','covered-call-lab/release-2.7.1.js','covered-call-lab/release-2.7.3.js']) {
+for (const file of ['covered-call-lab/data.js','covered-call-lab/release-2.7.js','covered-call-lab/release-2.7.1.js','covered-call-lab/release-2.7.3.js','covered-call-lab/ledger-data.js','covered-call-lab/benchmark-data.js','covered-call-lab/reconciliation.js','covered-call-lab/release-3.0.js']) {
   const source = fs.readFileSync(file, 'utf8').replace(/^const DATA/, 'DATA');
   vm.runInContext(source, context, { filename: file });
 }
@@ -11,7 +12,7 @@ for (const file of ['covered-call-lab/sp500.js','covered-call-lab/schd.js']) {
   const source = fs.readFileSync(file, 'utf8').replace(/^window\./gm, 'this.');
   vm.runInContext(source, context, { filename: file });
 }
-const symbols = new Set(['SPY','QQQ','DIA','SPYI','BND']);
+const symbols = new Set(['SPY','QQQ','DIA','SCHD','SPYI','JEPI','JEPQ','QQQI','PBP','XYLD','QYLD','BND']);
 for (const row of context.DATA.holdings || []) symbols.add(row.ticker);
 for (const row of context.SP500_SEED || []) symbols.add(row.ticker);
 for (const row of context.SCHD_SEED?.holdings || []) symbols.add(row.ticker);

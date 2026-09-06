@@ -25,7 +25,10 @@ const schdMap=new Map((schd?.holdings||[]).map(x=>[x.ticker,x]));
 const extras=[
   ['SCHD','Schwab U.S. Dividend Equity ETF'],['SPY','SPDR S&P 500 ETF Trust'],
   ['QQQ','Invesco QQQ Trust'],['DIA','SPDR Dow Jones Industrial Average ETF Trust'],
-  ['SPYI','NEOS S&P 500 High Income ETF'],['BND','Vanguard Total Bond Market ETF']
+  ['SPYI','NEOS S&P 500 High Income ETF'],['JEPI','JPMorgan Equity Premium Income ETF'],
+  ['JEPQ','JPMorgan Nasdaq Equity Premium Income ETF'],['QQQI','NEOS Nasdaq-100 High Income ETF'],
+  ['PBP','Invesco S&P 500 BuyWrite ETF'],['XYLD','Global X S&P 500 Covered Call ETF'],
+  ['QYLD','Global X Nasdaq 100 Covered Call ETF'],['BND','Vanguard Total Bond Market ETF']
 ];
 
 let previous={meta:{},securities:[]};

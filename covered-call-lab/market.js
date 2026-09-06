@@ -1,4 +1,4 @@
-/* Covered Call Lab v2.7.7 — priority holdings refresh plus resumable market maintenance. */
+/* Covered Call Lab v3.0.0 — priority holdings refresh plus resumable market maintenance. */
 (function(){
   const TAG_KEY='mdl.tags.v273',LIST_KEY='mdl.lists.v273',DB_KEY='mdl.market.v275';
   const CURSOR_KEY='mdl.market.cursor.v276',PORTFOLIO_KEY='mdl.portfolio.refresh.v275';
@@ -14,6 +14,12 @@
     {ticker:'QQQ',name:'Invesco QQQ Trust',sector:'ETF'},
     {ticker:'DIA',name:'SPDR Dow Jones Industrial Average ETF Trust',sector:'ETF'},
     {ticker:'SPYI',name:'NEOS S&P 500 High Income ETF',sector:'ETF'},
+    {ticker:'JEPI',name:'JPMorgan Equity Premium Income ETF',sector:'ETF'},
+    {ticker:'JEPQ',name:'JPMorgan Nasdaq Equity Premium Income ETF',sector:'ETF'},
+    {ticker:'QQQI',name:'NEOS Nasdaq-100 High Income ETF',sector:'ETF'},
+    {ticker:'PBP',name:'Invesco S&P 500 BuyWrite ETF',sector:'ETF'},
+    {ticker:'XYLD',name:'Global X S&P 500 Covered Call ETF',sector:'ETF'},
+    {ticker:'QYLD',name:'Global X Nasdaq 100 Covered Call ETF',sector:'ETF'},
     {ticker:'BND',name:'Vanguard Total Bond Market ETF',sector:'ETF'}
   ];
   let db={},snapshotMeta={},backgroundTimer=null,requestChain=Promise.resolve(),proxyEndpoint='';
@@ -57,7 +63,7 @@
   async function loadSnapshot(cacheBust=false){let u=SNAPSHOT_URL+(cacheBust?'?v='+Date.now():'');let r=await fetch(u,{cache:cacheBust?'no-store':'default'});if(!r.ok)throw new Error('Shared market snapshot HTTP '+r.status);applySnapshot(await r.json());return true}
   async function loadProxyConfig(){let r=await fetch(PROXY_CONFIG_URL+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Quote gateway configuration HTTP '+r.status);let config=await r.json();proxyEndpoint=String(config.endpoint||'').replace(/\/$/,'');if(!proxyEndpoint)throw new Error('Quote gateway is not deployed');return proxyEndpoint}
   function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
-  async function proxyQuotes(tickers){if(!proxyEndpoint)await loadProxyConfig();let r=await fetch(`${proxyEndpoint}/quotes?symbols=${encodeURIComponent(tickers.join(','))}`,{cache:'no-store'});if(r.status===429){state.rateLimitHits++;throw new Error('Quote gateway rate limit reached')}let payload=await r.json().catch(()=>({}));if(!r.ok&&!payload.quotes)throw new Error(payload.error||`Quote gateway HTTP ${r.status}`);return payload}
+  async function proxyQuotes(tickers){if(!proxyEndpoint)await loadProxyConfig();let r=await fetch(`${proxyEndpoint}/quotes?symbols=${encodeURIComponent(tickers.join(','))}`,{cache:'no-store'}),body=await r.text(),payload={};try{payload=body?JSON.parse(body):{}}catch{}if(r.status===429){state.rateLimitHits++;throw new Error('Quote gateway rate limit reached')}if(!r.ok&&!payload.quotes){let payloadDetail=Array.isArray(payload.rejected)&&payload.rejected.length?`${payload.error||'Rejected symbols'}: ${payload.rejected.join(', ')}`:payload.error,detail=String(payloadDetail||body||'').replace(/\s+/g,' ').trim().slice(0,180);throw new Error(`Quote gateway HTTP ${r.status}${detail?`: ${detail}`:''}`)}return payload}
   async function rawQuote(t){let payload=await proxyQuotes([t]),q=payload.quotes?.[t];if(!Number.isFinite(q?.price)||q.price<=0)throw new Error(payload.failed?.[0]?.error||'Quote gateway returned no current price');return q.price}
   function queuedQuote(t,priority=false){const run=async()=>{if(!priority)await wait(REQUEST_GAP_MS);return rawQuote(t)};if(priority)return run();requestChain=requestChain.then(run,run);return requestChain}
   function saveQuote(t,price,at=new Date().toISOString()){let old=db[t]||{ticker:t,name:t,sector:'',inSP500:false};db[t]={...old,price,lastQuoteRefresh:at,lastRefresh:at,provider:'Finnhub'};persist()}
@@ -71,7 +77,7 @@
     for(let round=0;pending.length&&round<=HOLDINGS_RETRY_DELAYS_MS.length;round++){
       if(round){let delay=HOLDINGS_RETRY_DELAYS_MS[round-1];markHoldingsBusy();state.portfolioStatus=`Holdings refresh partial: ${current.size}/${tickers.length} current; retrying ${pending.join(', ')} in ${Math.round(delay/1000)}s`;state.portfolioActiveTicker='Retry scheduled';notify();await wait(delay);state.portfolioStatus=`Retrying failed holdings: ${pending.join(', ')}`;state.portfolioActiveTicker=pending[0]||'';notify()}
       let payload={quotes:{},failed:[]};try{payload=await proxyQuotes(pending)}catch(e){state.lastError=e.message;payload.failed=pending.map(t=>({ticker:t,error:e.message}))}
-      const failed=[];for(const t of pending){state.portfolioActiveTicker=t;let q=payload.quotes?.[t];if(Number.isFinite(q?.price)&&q.price>0){saveQuote(t,q.price,q.retrievedAt);current.add(t)}else failed.push(t);state.portfolioDone=current.size;notify()}pending=failed;if(payload.failed?.length)state.lastError=payload.failed.map(x=>`${x.ticker}: ${x.error}`).join('; ')
+      const failed=[];for(const t of pending){state.portfolioActiveTicker=t;let q=payload.quotes?.[t];if(Number.isFinite(q?.price)&&q.price>0){saveQuote(t,q.price,q.retrievedAt);current.add(t)}else failed.push(t);state.portfolioDone=current.size;notify()}pending=failed;if(payload.failed?.length)state.lastError=[...new Set(payload.failed.map(x=>x.error).filter(Boolean))].join('; ')
     }
     state.portfolioFailed=pending.length;state.portfolioFailedTickers=[...pending];state.portfolioDone=current.size;state.portfolioRefreshing=false;state.portfolioActiveTicker='';clearHoldingsBusy();if(!pending.length){state.lastPortfolioRefresh=new Date().toISOString();write(PORTFOLIO_KEY,state.lastPortfolioRefresh);state.portfolioStatus=`Holdings refresh successful: ${current.size}/${tickers.length} current`}else if(current.size){state.portfolioStatus=`Holdings refresh stopped partial after automatic retries: ${current.size}/${tickers.length} current; stale ${pending.join(', ')}`}else state.portfolioStatus=`Holdings refresh failed after automatic retries: ${state.lastError}`;notify();scheduleBackground(5000);return pending.length===0;
   }
