@@ -1,6 +1,7 @@
 import { ALLOWED_TICKERS } from './generated-allowlist.js';
 
 const FINNHUB_QUOTE_URL = 'https://finnhub.io/api/v1/quote';
+const FINNHUB_SYMBOL_ALIASES = Object.freeze({ BFB: 'BF-B' });
 const MAX_SYMBOLS = 12;
 const allowed = new Set(ALLOWED_TICKERS);
 
@@ -28,7 +29,8 @@ async function getQuote(ticker, env, cache) {
   const cached = await cache.match(cacheKey);
   if (cached) return { ticker, ...(await cached.json()), cached: true };
 
-  const target = `${FINNHUB_QUOTE_URL}?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(env.FINNHUB_API_KEY)}`;
+  const upstreamTicker = FINNHUB_SYMBOL_ALIASES[ticker] || ticker;
+  const target = `${FINNHUB_QUOTE_URL}?symbol=${encodeURIComponent(upstreamTicker)}&token=${encodeURIComponent(env.FINNHUB_API_KEY)}`;
   let response;
   for (let attempt = 0; attempt < 3; attempt++) {
     response = await fetch(target, { headers: { accept: 'application/json' } });

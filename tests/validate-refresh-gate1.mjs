@@ -28,7 +28,8 @@ const payload=await response.json();
 
 assert.equal(response.status,200,'repository worker must accept BFB');
 assert.equal(payload.quotes.BFB.price,72.5,'repository worker must return the BFB upstream quote');
-assert.match(requestedUpstream,/symbol=BFB/,'worker must request BFB from the upstream provider');
+assert.equal(payload.quotes.BFB.ticker,'BFB','worker response must preserve the ledger ticker');
+assert.match(requestedUpstream,/symbol=BF-B/,'worker must request Finnhub using the BF-B alias');
 assert.equal(response.headers.get('access-control-allow-origin'),'https://themathdoesntlie.com');
 
 console.log('Validated Gate 1 repository path: BFB accepted and refresh diagnostics preserved.');
