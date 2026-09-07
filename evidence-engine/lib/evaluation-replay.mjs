@@ -5,8 +5,12 @@ import {
 } from "./evidence-engine.mjs";
 import { SCORING_VERSION } from "./evidence-scoring.mjs";
 import { ALIAS_REGISTRY_VERSION } from "./alias-registry.mjs";
-import { CALCULATION_REGISTRY_VERSION } from "./calculation-registry.mjs";
+import { CALCULATION_REGISTRY_VERSION, PERIOD_COMPATIBILITY_VERSION } from "./calculation-registry.mjs";
 import { CANONICAL_REGISTRY_VERSION } from "./canonical-registry.mjs";
+import {
+  PERIOD_ASSEMBLY_VERSION,
+  replayQuarterlyEvaluation,
+} from "./period-assembly.mjs";
 
 export const EVALUATION_RECORD_SCHEMA_VERSION = "1.0";
 export const REPLAY_CONTRACT_VERSION = "1.0.0";
@@ -50,6 +54,12 @@ export function replayEligibility(snapshot) {
       ? []
       : [{ key, label, recorded: recorded[key], available: available[key] }],
   );
+  if (snapshot?.periodAssemblyVersion && snapshot.periodAssemblyVersion !== PERIOD_ASSEMBLY_VERSION) {
+    mismatches.push({ key: "periodAssemblyVersion", label: "Period assembly", recorded: snapshot.periodAssemblyVersion, available: PERIOD_ASSEMBLY_VERSION });
+  }
+  if (snapshot?.periodCompatibilityVersion && snapshot.periodCompatibilityVersion !== PERIOD_COMPATIBILITY_VERSION) {
+    mismatches.push({ key: "periodCompatibilityVersion", label: "Period compatibility", recorded: snapshot.periodCompatibilityVersion, available: PERIOD_COMPATIBILITY_VERSION });
+  }
 
   return {
     eligible: mismatches.length === 0,
@@ -146,7 +156,9 @@ export async function replayStoredEvaluation(snapshot) {
     };
   }
 
-  const replayed = await evaluateInputs(snapshot.inputs);
+  const replayed = snapshot?.periodAssemblyVersion
+    ? (await replayQuarterlyEvaluation(snapshot)).evaluation
+    : await evaluateInputs(snapshot.inputs);
   const comparison = compareEvaluationSnapshots(snapshot, replayed);
   return {
     status: comparison.fingerprintMatch ? "Reproduced" : "Diverged",
@@ -157,7 +169,9 @@ export async function replayStoredEvaluation(snapshot) {
 }
 
 export async function compareStoredWithCurrent(snapshot) {
-  const candidate = await evaluateInputs(snapshot.inputs);
+  const candidate = snapshot?.periodAssemblyVersion
+    ? (await replayQuarterlyEvaluation(snapshot)).evaluation
+    : await evaluateInputs(snapshot.inputs);
   return {
     status: "Compared",
     candidate,

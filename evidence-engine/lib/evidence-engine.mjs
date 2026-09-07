@@ -493,13 +493,15 @@ export async function evaluateInputs(rawInput) {
   input.reportingPeriodDays = reportingPeriodDays;
   input.reportingPeriod = {
     periodId: `${input.ticker}-${input.periodStart}-${input.periodEnd}`,
-    periodType: "FiscalYear",
+    periodType: input.reportingPeriodType ?? "FiscalYear",
     startDate: input.periodStart,
     endDate: input.periodEnd,
     actualDayCount: reportingPeriodDays,
     countingConvention: "actual_inclusive",
     calendarVersion: input.reportingCalendarVersion ?? "1.0.0",
-    resolutionSource: input.acquisition ? "SEC annual duration context" : "Governed input dates",
+    resolutionSource: input.reportingPeriodResolutionSource ?? (
+      input.acquisition ? "SEC annual duration context" : "Governed input dates"
+    ),
     validationState: "Valid",
   };
 
@@ -760,6 +762,20 @@ export async function evaluateInputs(rawInput) {
   ];
 
   const scoring = scoreEvaluation({ metrics, unavailableMetrics, inputs: input });
+  const quarterlyEvidenceParts = (evidence) => input.periodAssemblyVersion ? [
+    evidence.evidenceItemId,
+    evidence.periodBasis,
+    evidence.evidenceStatus,
+    evidence.fiscalYear,
+    evidence.fiscalQuarter,
+    evidence.sourceManifestReference,
+    evidence.transformationId,
+    evidence.transformationVersion,
+    [...(evidence.componentEvidenceIds ?? [])].join(","),
+    evidence.carriedFromResultId,
+    evidence.carriedFromEvidenceId,
+    evidence.originalKnownAt,
+  ] : [];
   const canonicalInputEvidence = Object.entries(input.inputEvidence ?? {})
     .filter(([key]) => !["sharePrice", "marketObservationDate", "marketUrl"].includes(key))
     .sort(([left], [right]) => left.localeCompare(right))
@@ -788,6 +804,7 @@ export async function evaluateInputs(rawInput) {
         evidence.reviewDecision?.supportingSourceLocation,
         [...(evidence.reviewDecision?.supportingSourceLocations ?? [])].sort().join(","),
         evidence.reviewDecision?.reviewPolicyVersion,
+        ...quarterlyEvidenceParts(evidence),
         canonicalNumber(input[key]),
       ]
         .map((part) => part ?? "")
@@ -833,6 +850,7 @@ export async function evaluateInputs(rawInput) {
     ALIAS_REGISTRY_VERSION,
     input.acquisition?.version ?? "manual-input",
     input.evidenceResolutionVersion ?? "no-evidence-resolution-policy",
+    ...(input.periodAssemblyVersion ? [input.periodAssemblyVersion] : []),
     input.companyName,
     input.periodStart,
     input.periodEnd,
@@ -859,6 +877,7 @@ export async function evaluateInputs(rawInput) {
     calculationRegistryVersion: CALCULATION_REGISTRY_VERSION,
     aliasRegistryVersion: ALIAS_REGISTRY_VERSION,
     evidenceResolutionVersion: input.evidenceResolutionVersion ?? null,
+    periodAssemblyVersion: input.periodAssemblyVersion ?? null,
     scoringVersion: SCORING_VERSION,
     generatedAt: new Date().toISOString(),
     companyName: input.companyName,

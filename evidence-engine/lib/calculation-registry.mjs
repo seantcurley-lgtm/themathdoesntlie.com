@@ -1,6 +1,47 @@
 import { canonicalFor } from "./canonical-registry.mjs";
 
 export const CALCULATION_REGISTRY_VERSION = "1.0.0";
+export const PERIOD_COMPATIBILITY_VERSION = "1.0.0";
+
+const periodCompatibilityEntries = [
+  ["dso", "B", "TTMFlowToComparablePriorQuarterAverageBalance"],
+  ["dio", "B", "TTMFlowToComparablePriorQuarterAverageBalance"],
+  ["dpo", "B", "TTMFlowToComparablePriorQuarterAverageBalance"],
+  ["ccc", "B", "CompatibleDerivedComponents"],
+  ["currentRatio", "A", "CurrentQuarterInstant"],
+  ["quickRatio", "A", "CurrentQuarterInstant"],
+  ["workingCapital", "A", "CurrentQuarterInstant"],
+  ["grossMargin", "B", "TrailingTwelveMonths"],
+  ["operatingMargin", "B", "TrailingTwelveMonths"],
+  ["netProfitMargin", "B", "TrailingTwelveMonths"],
+  ["returnOnAssets", "B", "TTMFlowToComparablePriorQuarterAverageBalance"],
+  ["returnOnEquity", "B", "TTMFlowToComparablePriorQuarterAverageBalance"],
+  ["debtToEquity", "A", "CurrentQuarterInstant"],
+  ["debtRatio", "A", "CurrentQuarterInstant"],
+  ["equityRatio", "A", "CurrentQuarterInstant"],
+  ["financialLeverage", "B", "ComparablePriorQuarterAverageBalances"],
+  ["interestCoverage", "B", "TrailingTwelveMonths"],
+  ["operatingCashFlowRatio", "B", "TTMFlowToCurrentQuarterInstant"],
+  ["freeCashFlow", "B", "TrailingTwelveMonths"],
+  ["freeCashFlowMargin", "B", "TrailingTwelveMonths"],
+  ["operatingCashFlowMargin", "B", "TrailingTwelveMonths"],
+  ["cashConversionRatio", "B", "TrailingTwelveMonths"],
+  ["priceToBook", "A", "CurrentMarketToCurrentQuarterInstant"],
+  ["priceToEarnings", "C", "ExactAnnualRuleCarryForward"],
+  ["priceToSales", "B", "CurrentMarketToTrailingTwelveMonths"],
+  ["evToOperatingCashFlow", "B", "CurrentEnterpriseValueToTrailingTwelveMonths"],
+  ["evToFreeCashFlow", "B", "CurrentEnterpriseValueToTrailingTwelveMonths"],
+  ["evToEbitda", "B", "CurrentEnterpriseValueToTrailingTwelveMonths"],
+  ["evToEbit", "B", "CurrentEnterpriseValueToTrailingTwelveMonths"],
+  ["evToSales", "B", "CurrentEnterpriseValueToTrailingTwelveMonths"],
+];
+
+export const metricPeriodCompatibility = Object.freeze(Object.fromEntries(
+  periodCompatibilityEntries.map(([metricId, classification, requiredBasis]) => [
+    metricId,
+    Object.freeze({ metricId, classification, requiredBasis, version: PERIOD_COMPATIBILITY_VERSION }),
+  ]),
+));
 
 const calc = (id, name, family, unit, expression, dependencies, operation, options = {}) => Object.freeze({
   id,

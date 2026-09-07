@@ -48,3 +48,25 @@ test("renders the public TMDL workbench shell", async () => {
   assert.match(html, />Scoring</);
   assert.match(html, /Microsoft Corporation/);
 });
+
+test("built state service rejects anonymous publication and keeps History private", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("authorization-test", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/api/evaluations", { method: "POST", body: "{}" }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  assert.equal(response.status, 403);
+  assert.match(await response.text(), /requires job authorization/i);
+
+  for (const method of ["PUT", "PATCH", "DELETE"]) {
+    const mutation = await worker.fetch(
+      new Request("http://localhost/api/evaluations?id=eer_fixture", { method }),
+      { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+      { waitUntil() {}, passThroughOnException() {} },
+    );
+    assert.equal(mutation.status, 405);
+  }
+});

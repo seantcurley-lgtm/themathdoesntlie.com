@@ -1,0 +1,39 @@
+name: Evidence Engine prospective longitudinal generation
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Supported SEC filing detection runs weekdays after the shared market snapshot refresh.
+    # Friday UTC is the declared weekly valuation observation generation.
+    - cron: '30 16 * * 1-5'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evidence-engine-longitudinal-generation
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    # Remains inert until the human owner explicitly authorizes production
+    # publication by setting the repository variable to true.
+    if: ${{ vars.EVIDENCE_ENGINE_LONGITUDINAL_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EVIDENCE_ENGINE_STATE_ENDPOINT: ${{ secrets.EVIDENCE_ENGINE_STATE_ENDPOINT }}
+      EVIDENCE_ENGINE_PUBLICATION_TOKEN: ${{ secrets.EVIDENCE_ENGINE_PUBLICATION_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: evidence-engine/package-lock.json
+      - name: Install pinned Evidence Engine dependencies
+        working-directory: evidence-engine
+        run: npm ci
+      - name: Run prospective supported-filing detector and generation
+        working-directory: evidence-engine
+        run: node scripts/run-longitudinal-generation.mjs

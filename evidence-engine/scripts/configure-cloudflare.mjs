@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 
 const configPath = new URL("../dist/server/wrangler.json", import.meta.url);
 const config = JSON.parse(await readFile(configPath, "utf8"));
@@ -9,9 +9,19 @@ config.compatibility_date = "2026-08-11";
 config.compatibility_flags = ["nodejs_compat"];
 delete config.routes;
 
-// The public release deliberately has no cloud record store. Evaluation,
-// SEC acquisition, browser drafts, and exports remain available, while the
-// immutable-record API returns 403 for anonymous visitors.
-config.d1_databases = [];
+const databaseId = process.env.EVIDENCE_ENGINE_D1_DATABASE_ID;
+if (!databaseId) {
+  throw new Error("EVIDENCE_ENGINE_D1_DATABASE_ID is required; refusing to deploy an unbound authoritative state service.");
+}
+config.d1_databases = [{
+  binding: "DB",
+  database_name: "tmdl-evidence-engine",
+  database_id: databaseId,
+  migrations_dir: "drizzle",
+}];
+
+const migrationTarget = new URL("../dist/server/drizzle/", import.meta.url);
+await mkdir(migrationTarget, { recursive: true });
+await cp(new URL("../drizzle/", import.meta.url), migrationTarget, { recursive: true });
 
 await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`);

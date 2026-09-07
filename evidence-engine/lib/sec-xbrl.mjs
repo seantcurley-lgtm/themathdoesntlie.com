@@ -23,7 +23,12 @@ import {
 } from "./entity-continuity-registry.mjs";
 
 export const ACQUISITION_VERSION = "6.4.0-sec";
-export const SUPPORTED_FILING_FORMS = Object.freeze(["10-K"]);
+export const SUPPORTED_ANNUAL_FILING_FORMS = Object.freeze(["10-K"]);
+export const SUPPORTED_QUARTERLY_FILING_FORMS = Object.freeze(["10-Q", "10-Q/A"]);
+export const SUPPORTED_FILING_FORMS = Object.freeze([
+  ...SUPPORTED_ANNUAL_FILING_FORMS,
+  ...SUPPORTED_QUARTERLY_FILING_FORMS,
+]);
 
 const MILLION = 1_000_000;
 
@@ -133,6 +138,40 @@ function rowsFromRecent(recent) {
   );
 }
 
+export function mergeSubmissionHistory(submissions, additionalPayloads = []) {
+  const recent = submissions?.filings?.recent ?? {};
+  const histories = additionalPayloads.map((payload) => payload?.filings?.recent ?? payload ?? {});
+  const keys = [...new Set([Object.keys(recent), ...histories.map((history) => Object.keys(history))].flat())];
+  return {
+    ...submissions,
+    filings: {
+      ...(submissions?.filings ?? {}),
+      recent: Object.fromEntries(keys.map((key) => [
+        key,
+        [recent[key] ?? [], ...histories.map((history) => history[key] ?? [])].flat(),
+      ])),
+    },
+  };
+}
+
+function filingRecord(row, cik) {
+  const accessionNumber = String(row.accessionNumber);
+  const accessionCompact = accessionNumber.replaceAll("-", "");
+  const cikCompact = String(Number(cik));
+  const primaryDocument = String(row.primaryDocument ?? "");
+  const filingUrl = primaryDocument
+    ? `https://www.sec.gov/Archives/edgar/data/${cikCompact}/${accessionCompact}/${primaryDocument}`
+    : `https://www.sec.gov/Archives/edgar/data/${cikCompact}/${accessionCompact}/`;
+  return {
+    form: String(row.form),
+    accessionNumber,
+    filingDate: String(row.filingDate),
+    reportDate: String(row.reportDate),
+    primaryDocument,
+    filingUrl,
+  };
+}
+
 export function selectLatestAnnualFiling(submissions, cik) {
   const rows = rowsFromRecent(submissions?.filings?.recent);
   const filing = rows
@@ -141,20 +180,60 @@ export function selectLatestAnnualFiling(submissions, cik) {
       String(right.filingDate ?? "").localeCompare(String(left.filingDate ?? "")),
     )[0];
   if (!filing) throw new Error("No supported 10-K filing was found in the current SEC submission history.");
-  const accessionCompact = String(filing.accessionNumber).replaceAll("-", "");
-  const cikCompact = String(Number(cik));
-  const primaryDocument = String(filing.primaryDocument ?? "");
-  const filingUrl = primaryDocument
-    ? `https://www.sec.gov/Archives/edgar/data/${cikCompact}/${accessionCompact}/${primaryDocument}`
-    : `https://www.sec.gov/Archives/edgar/data/${cikCompact}/${accessionCompact}/`;
+  return filingRecord(filing, cik);
+}
+
+export function selectLatestQuarterlyFiling(submissions, cik) {
+  const rows = rowsFromRecent(submissions?.filings?.recent)
+    .filter((row) => SUPPORTED_QUARTERLY_FILING_FORMS.includes(row.form) && row.accessionNumber && row.reportDate)
+    .sort((left, right) =>
+      String(right.reportDate ?? "").localeCompare(String(left.reportDate ?? "")) ||
+      String(right.filingDate ?? "").localeCompare(String(left.filingDate ?? "")) ||
+      String(right.accessionNumber).localeCompare(String(left.accessionNumber)),
+    );
+  const selected = rows[0];
+  if (!selected) throw new Error("No supported 10-Q filing was found in the current SEC submission history.");
+  const latestFiled = [...rows].sort((left, right) =>
+    String(right.filingDate ?? "").localeCompare(String(left.filingDate ?? "")) ||
+    String(right.accessionNumber).localeCompare(String(left.accessionNumber)),
+  )[0];
+  if (latestFiled.form === "10-Q/A" && latestFiled.reportDate < selected.reportDate) {
+    throw new Error("A later-filed 10-Q/A amends an older period than the latest governing quarter; review is required.");
+  }
+  const filing = filingRecord(selected, cik);
+  if (filing.form !== "10-Q/A") return { ...filing, sourceRole: "Original", amendsAccessionNumber: null };
+  const original = rows.find((row) =>
+    row.form === "10-Q" &&
+    row.reportDate === selected.reportDate &&
+    String(row.filingDate ?? "") <= String(selected.filingDate ?? ""),
+  );
+  if (!original) throw new Error("The latest 10-Q/A cannot be tied to an original 10-Q in the current SEC submission history.");
   return {
-    form: "10-K",
-    accessionNumber: String(filing.accessionNumber),
-    filingDate: String(filing.filingDate),
-    reportDate: String(filing.reportDate),
-    primaryDocument,
-    filingUrl,
+    ...filing,
+    sourceRole: "Amendment",
+    amendsAccessionNumber: String(original.accessionNumber),
+    originalFiling: filingRecord(original, cik),
   };
+}
+
+export function selectComparablePriorQuarterlyFiling(submissions, cik, currentFiling) {
+  const candidates = rowsFromRecent(submissions?.filings?.recent)
+    .filter((row) => row.form === "10-Q" && row.accessionNumber && row.reportDate)
+    .map((row) => filingRecord(row, cik))
+    .filter((row) => {
+      const distance = (Date.parse(`${currentFiling.reportDate}T00:00:00Z`) - Date.parse(`${row.reportDate}T00:00:00Z`)) / 86_400_000;
+      return distance >= 350 && distance <= 380;
+    })
+    .sort((left, right) => {
+      const leftDistance = Math.abs(Date.parse(`${currentFiling.reportDate}T00:00:00Z`) - Date.parse(`${left.reportDate}T00:00:00Z`));
+      const rightDistance = Math.abs(Date.parse(`${currentFiling.reportDate}T00:00:00Z`) - Date.parse(`${right.reportDate}T00:00:00Z`));
+      return leftDistance - rightDistance || right.filingDate.localeCompare(left.filingDate);
+    });
+  const selected = candidates[0];
+  if (!selected) throw new Error("No comparable prior-year 10-Q was found in the current SEC submission history.");
+  const distanceDays = Math.abs(Date.parse(`${selected.reportDate}T00:00:00Z`) - Date.parse(`${currentFiling.reportDate}T00:00:00Z`)) / 86_400_000;
+  if (distanceDays < 350 || distanceDays > 380) throw new Error("The prior-year 10-Q reporting date is not compatible with the current fiscal quarter.");
+  return { ...selected, sourceRole: "ComparablePriorQuarter" };
 }
 
 function conceptUnitFacts(companyFacts, taxonomy, concept, units) {

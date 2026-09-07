@@ -13,7 +13,9 @@
     "test": "npm run lint && npm run build && node --test tests/*.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
+    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
+    "ee:preview-quarterly": "node scripts/preview-quarterly.mjs",
+    "generate:longitudinal": "node scripts/run-longitudinal-generation.mjs"
   },
   "dependencies": {
     "decimal.js": "10.6.0",

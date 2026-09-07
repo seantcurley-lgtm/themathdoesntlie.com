@@ -3,8 +3,11 @@ import test from "node:test";
 
 import {
   buildAcquisitionPackage,
+  mergeSubmissionHistory,
   resolveTicker,
+  selectComparablePriorQuarterlyFiling,
   selectLatestAnnualFiling,
+  selectLatestQuarterlyFiling,
 } from "../lib/sec-xbrl.mjs";
 import { resolveReportingPeriodStartFromFiling } from "../lib/evidence-resolution.mjs";
 import { evaluateInputs, renderMarkdown } from "../lib/evidence-engine.mjs";
@@ -131,6 +134,53 @@ test("latest supported annual filing is selected deterministically", () => {
     filing.filingUrl,
     "https://www.sec.gov/Archives/edgar/data/1/000000000125000001/fixture-20250927.htm",
   );
+});
+
+test("latest 10-Q/A is distinct and tied to its exact original 10-Q", () => {
+  const quarterly = structuredClone(submissions);
+  quarterly.filings.recent = {
+    accessionNumber: ["qa-current", "q-current", "q-prior", ...submissions.filings.recent.accessionNumber],
+    filingDate: ["2026-05-10", "2026-04-30", "2025-05-01", ...submissions.filings.recent.filingDate],
+    reportDate: ["2026-03-31", "2026-03-31", "2025-03-31", ...submissions.filings.recent.reportDate],
+    form: ["10-Q/A", "10-Q", "10-Q", ...submissions.filings.recent.form],
+    primaryDocument: ["qa.htm", "q.htm", "pq.htm", ...submissions.filings.recent.primaryDocument],
+  };
+  const latest = selectLatestQuarterlyFiling(quarterly, "0000000001");
+  assert.equal(latest.accessionNumber, "qa-current");
+  assert.equal(latest.amendsAccessionNumber, "q-current");
+  assert.equal(latest.originalFiling.accessionNumber, "q-current");
+  assert.equal(selectComparablePriorQuarterlyFiling(quarterly, "0000000001", latest).accessionNumber, "q-prior");
+});
+
+test("a later-filed amendment cannot silently regress the governing quarterly period", () => {
+  const quarterly = structuredClone(submissions);
+  quarterly.filings.recent = {
+    accessionNumber: ["qa-old", "q-new", "q-old", ...submissions.filings.recent.accessionNumber],
+    filingDate: ["2026-09-01", "2026-07-31", "2026-04-30", ...submissions.filings.recent.filingDate],
+    reportDate: ["2026-03-31", "2026-06-30", "2026-03-31", ...submissions.filings.recent.reportDate],
+    form: ["10-Q/A", "10-Q", "10-Q", ...submissions.filings.recent.form],
+    primaryDocument: ["qa-old.htm", "q-new.htm", "q-old.htm", ...submissions.filings.recent.primaryDocument],
+  };
+  assert.throws(
+    () => selectLatestQuarterlyFiling(quarterly, "0000000001"),
+    /amends an older period.*review is required/i,
+  );
+});
+
+test("supplemental SEC submission history can supply the exact comparable quarter", () => {
+  const currentOnly = structuredClone(submissions);
+  currentOnly.filings.recent = {
+    accessionNumber: ["q-current", ...submissions.filings.recent.accessionNumber],
+    filingDate: ["2026-04-30", ...submissions.filings.recent.filingDate],
+    reportDate: ["2026-03-31", ...submissions.filings.recent.reportDate],
+    form: ["10-Q", ...submissions.filings.recent.form],
+    primaryDocument: ["q.htm", ...submissions.filings.recent.primaryDocument],
+  };
+  const extended = mergeSubmissionHistory(currentOnly, [{
+    accessionNumber: ["q-prior"], filingDate: ["2025-05-01"], reportDate: ["2025-03-31"], form: ["10-Q"], primaryDocument: ["pq.htm"],
+  }]);
+  const current = selectLatestQuarterlyFiling(extended, "0000000001");
+  assert.equal(selectComparablePriorQuarterlyFiling(extended, "0000000001", current).accessionNumber, "q-prior");
 });
 
 test("Company Facts map into a governed engine dataset with provenance", async () => {

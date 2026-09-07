@@ -464,7 +464,26 @@ function summarizeFamily(family, rows) {
   };
 }
 
-export function scoreEvaluation({ metrics, unavailableMetrics = [], inputs }) {
+function governedCarriedRule(current, carried) {
+  if (!carried || current.status !== "Unavailable" || carried.status !== "Scored") return current;
+  if (
+    carried.metricId !== current.metricId ||
+    carried.weight !== current.weight ||
+    carried.maximumPoints !== current.maximumPoints ||
+    carried.policy !== current.policy
+  ) return current;
+  return {
+    ...carried,
+    authorityStatus: "CarriedForward",
+    carriedFromResultId: carried.carriedFromResultId,
+    carriedFromEvidenceId: carried.carriedFromEvidenceId ?? null,
+    originalEvidencePeriod: carried.originalEvidencePeriod ?? null,
+    originalSource: carried.originalSource ?? null,
+    originalFreshness: carried.originalFreshness ?? null,
+  };
+}
+
+export function scoreEvaluation({ metrics, unavailableMetrics = [], inputs, carriedRules = [] }) {
   const classification = classificationFor(inputs);
   const base = {
     scoringVersion: SCORING_VERSION,
@@ -497,7 +516,11 @@ export function scoreEvaluation({ metrics, unavailableMetrics = [], inputs }) {
 
   const metricMap = new Map(metrics.map((metric) => [metric.id, metric]));
   const unavailableMetricMap = new Map(unavailableMetrics.map((metric) => [metric.id, metric]));
-  const rules = scoringRules.map((rule) => scoreRule(rule, metricMap, unavailableMetricMap, inputs));
+  const carriedRuleMap = new Map(carriedRules.map((rule) => [rule.metricId, rule]));
+  const rules = scoringRules.map((rule) => {
+    const current = scoreRule(rule, metricMap, unavailableMetricMap, inputs);
+    return governedCarriedRule(current, carriedRuleMap.get(rule.metricId));
+  });
   const availableRows = rules.filter((row) => row.status === "Scored");
   const availableWeight = availableRows.length
     ? Decimal.sum(...availableRows.map((row) => row.maximumPoints))

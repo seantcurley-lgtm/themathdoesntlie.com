@@ -4,6 +4,32 @@ A browser-based financial evidence engine that turns an SEC-listed ticker into a
 
 Production application: <https://evidence-engine-workbench.solar-maple-1068.chatgpt.site>
 
+## Prospective authoritative state service
+
+This implementation is candidate code only: the remote migration, Worker secret, deployment, bounded production qualification, and recurring schedule have not been activated.
+
+The longitudinal service publishes new Evidence Engine states prospectively and append-only. It does not reconstruct prior scores. `sec-cik:##########` is the durable security identity; ticker aliases are resolved only within their recorded validity interval. Source/evidence dates say when evidence became public, `knownAt` is the earliest instant the system may use the state, and `publishedAt` records when the immutable publication was accepted.
+
+Fiscal `periodEnd` is never used for as-of authority. An as-of lookup selects the greatest `knownAt` no later than the requested timestamp and returns `NoAuthoritativeStateBeforeTimestamp` when none exists. Reads never evaluate or fall forward.
+
+Publications keep a semantic `stateFingerprint` and an independent SHA-256 `recordHash` of the exact canonical stored JSON. Matching fingerprints are idempotent only when their record hashes also match; otherwise publication returns a visible integrity conflict. The source manifest records SEC accession/form/filed and reporting dates, acquisition time, immutable filing reference, mapped-evidence hash, governed resolutions, and the declared market observation identity/hash without retaining copyrighted bulk source content.
+
+All state and generation endpoints require `Authorization: Bearer <EVIDENCE_ENGINE_PUBLICATION_TOKEN>` and fail closed when the server secret is absent. There are no update or delete application routes. Manual deployment requires `EVIDENCE_ENGINE_D1_DATABASE_ID`; applying and verifying the checked-in D1 migrations is a separate default-off workflow input. The Worker secret must be provisioned out of band; it is never sent to browser code.
+
+The scheduled monitor checks SEC Submissions on weekdays and supports the latest governing `10-K` plus a later `10-Q` or `10-Q/A`. An unchanged source representation is skipped. Friday UTC is the declared weekly market-observation generation; new supported filing evidence uses the freshest declared observation already present in the governed shared market snapshot. This creates at most one routine valuation state per week rather than one per quote tick. Each run publishes an immutable generation manifest reconciling created, reused, withheld, excluded, and failed outcomes; failures cause the job to fail visibly after the manifest is recorded. The schedule remains inert until the human owner explicitly sets the `EVIDENCE_ENGINE_LONGITUDINAL_ENABLED` repository variable to `true`.
+
+Coverage remains weighted scoreability. Freshness dates are separate metadata and are not classified stale/fresh because this release has no governed freshness thresholds.
+
+## Local quarterly preview
+
+Quarterly Evidence Assembly can be exercised for one live SEC ticker without a state service, publication token, D1, or browser route:
+
+```bash
+npm run ee:preview-quarterly -- AAPL
+```
+
+The command uses the governed market snapshot and the same SEC selection, annual acquisition, quarterly period assembly, calculation, scoring, and source-manifest modules as prospective generation. It is read-only and labels every result `LOCAL PREVIEW — NOT AN AUTHORITATIVE PUBLISHED STATE`. Use `--json` for complete machine-readable evidence and provenance, `--out <path>` to save that JSON locally, and `--prior-result <path>` only when an exact legitimate prior Evidence Result artifact is available for annual P/E carry authority.
+
 ## Release 6.5 TMDL Product Integration
 
 Release 6.5 connects the workbench to The Math Doesn't Lie shared security universe. A validated TMDL launch may prefill ticker and dated market evidence while the Evidence Engine independently verifies SEC identity and filing evidence. The application is `6.5.0`; the calculation engine, acquisition mapper, scoring policy, and governed registries remain at their Release 6.4 identities because no methodology changed. See `docs/RELEASE_6_5_TMDL_INTEGRATION.md`.
