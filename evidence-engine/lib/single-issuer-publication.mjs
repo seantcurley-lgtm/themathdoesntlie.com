@@ -1,4 +1,5 @@
 import { createLiveQuarterlyPreview } from "./quarterly-preview.mjs";
+import { hasSameCanonicalEvaluationIdentity } from "./evaluation-identity.mjs";
 import {
   createLongitudinalPublication,
   detectProspectiveWork,
@@ -142,7 +143,7 @@ function sameAuthority(existing, preview) {
   const record = existing.exactRecord;
   const current = candidateAuthority(preview);
   return record.securityId === current.securityId
-    && record.evaluation?.fingerprint === preview.evaluation?.fingerprint
+    && hasSameCanonicalEvaluationIdentity(record.evaluation, preview.evaluation)
     && record.freshness?.latestAnnualFilingAccession === current.latestAnnualAccession
     && (record.freshness?.latestQuarterlyFilingAccession ?? null) === current.latestQuarterlyAccession
     && (record.freshness?.latestQuarterlySourceHash ?? null) === current.latestQuarterlySourceHash

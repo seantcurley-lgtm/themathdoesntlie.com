@@ -81,6 +81,23 @@ function createFirstPublicationService({ postResponse } = {}) {
   return { calls, fetchImpl };
 }
 
+function withEvaluationAcquisitionClock(fixture, acquiredAt, fingerprint = `legacy-${acquiredAt}`) {
+  const changed = structuredClone(fixture);
+  const setEvidenceClock = (evidence) => {
+    if (!evidence || typeof evidence !== "object") return;
+    evidence.knownAt = acquiredAt;
+    for (const component of evidence.componentEvidence ?? []) setEvidenceClock(component);
+  };
+  changed.preview.previewKnownAt = acquiredAt;
+  changed.evaluation.inputs.acquisition = { ...changed.evaluation.inputs.acquisition, acquiredAt };
+  for (const evidence of Object.values(changed.evaluation.inputs.inputEvidence ?? {})) setEvidenceClock(evidence);
+  for (const metric of changed.evaluation.metrics ?? []) {
+    for (const lineage of metric.lineage ?? []) setEvidenceClock(lineage.evidence);
+  }
+  changed.evaluation.fingerprint = fingerprint;
+  return changed;
+}
+
 test("exactly one explicit ticker and an unmistakable write guard are required", () => {
   assert.deepEqual(parseSingleIssuerPublicationArguments(["aapl", AUTHORITATIVE_WRITE_FLAG, "--json"]), {
     ticker: "AAPL", json: true, confirmed: true, help: false,
@@ -137,8 +154,12 @@ test("deterministic fixture uses production publication construction and handles
   assert.equal(secondRequest.recordHash, firstRequest.recordHash);
 });
 
-test("an unchanged exact authoritative input is reposted and surfaced as Reused", async () => {
-  const fixture = await qualificationFixture();
+test("a legacy stored evaluation with a different acquisition clock is reposted and surfaced as Reused", async () => {
+  const fixture = withEvaluationAcquisitionClock(
+    await qualificationFixture(),
+    "2026-09-07T18:37:49.130Z",
+    "bb3e594a8766aa2fcbe27a177fb19519573383dd22e3c2da4db7855ab445c53b",
+  );
   const firstService = createFirstPublicationService();
   await publishSingleIssuer({ ticker: "AAPL", endpoint, token, confirmed: true, fetchImpl: firstService.fetchImpl, acquire: async () => fixture, now: fixedNow });
   const original = JSON.parse(firstService.calls[1].options.body);
@@ -157,13 +178,45 @@ test("an unchanged exact authoritative input is reposted and surfaced as Reused"
     assert.deepEqual(repeated.publication, original.publication);
     return response({ created: false, record: { ...summaryRecord, ...original.publication } });
   };
+  const reacquired = withEvaluationAcquisitionClock(
+    fixture,
+    "2026-09-07T18:41:22.093Z",
+    "cbd62f22f6ef4203fedfba7a724cd81b2c778b997c29d2ea9016ea508f367c3c",
+  );
+  assert.notEqual(original.publication.evaluation.fingerprint, reacquired.evaluation.fingerprint);
   const completed = await publishSingleIssuer({ ticker: "AAPL", endpoint, token, confirmed: true, fetchImpl, acquire: async ({ priorAnnualPublication }) => {
     assert.equal(priorAnnualPublication.resultId, original.publication.resultId);
-    return fixture;
+    return reacquired;
   }, now: () => new Date("2026-08-02T00:00:00.000Z") });
   assert.equal(completed.summary.disposition, "ReusedExactAuthoritativeInput");
   assert.equal(completed.result.publicationStatus, "Reused");
   assert.equal(calls.filter((call) => call.options.method === "POST").length, 1);
+});
+
+test("a genuine evaluation difference under unchanged source cursors fails closed before POST", async () => {
+  const fixture = withEvaluationAcquisitionClock(await qualificationFixture(), "2026-08-01T00:00:00.000Z");
+  const firstService = createFirstPublicationService();
+  await publishSingleIssuer({ ticker: "AAPL", endpoint, token, confirmed: true, fetchImpl: firstService.fetchImpl, acquire: async () => fixture, now: fixedNow });
+  const original = JSON.parse(firstService.calls[1].options.body);
+  const summaryRecord = {
+    resultId: original.publication.resultId,
+    securityId: original.publication.securityId,
+    freshness: original.publication.freshness,
+  };
+  let postCount = 0;
+  const fetchImpl = async (url, options = {}) => {
+    if (url.includes("?ticker=")) return response({ records: [summaryRecord] });
+    if (url.includes("?id=")) return response({ record: { exactRecord: original.publication, integrity: { recordHash: original.recordHash } } });
+    if (options.method === "POST") postCount += 1;
+    return response({ created: false, record: summaryRecord });
+  };
+  const conflicted = withEvaluationAcquisitionClock(fixture, "2026-08-02T00:00:00.000Z");
+  conflicted.evaluation.inputs.revenue += 1;
+  await assert.rejects(
+    () => publishSingleIssuer({ ticker: "AAPL", endpoint, token, confirmed: true, fetchImpl, acquire: async () => conflicted, now: fixedNow }),
+    (error) => error instanceof StateServiceError && error.code === "IntegrityConflict",
+  );
+  assert.equal(postCount, 0);
 });
 
 test("IntegrityConflict, authorization, and network publication failures are surfaced", async () => {

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { metricPeriodCompatibility, requestedCalculationIds } from "../lib/calculation-registry.mjs";
 import { evaluateInputs, microsoftFiscal2025 } from "../lib/evidence-engine.mjs";
+import { canonicalEvaluationIdentity } from "../lib/evaluation-identity.mjs";
 import { replayStoredEvaluation } from "../lib/evaluation-replay.mjs";
 import {
   PERIOD_ASSEMBLY_VERSION,
@@ -194,6 +195,74 @@ function quarterlyAssembly(accessionNumber = "quarterly-1") {
   };
 }
 
+function withAssemblyAcquisitionClock(assembly, acquiredAt) {
+  const changed = structuredClone(assembly);
+  changed.inputs.acquisition = { ...changed.inputs.acquisition, acquiredAt };
+  const setEvidenceClock = (evidence) => {
+    if (!evidence || typeof evidence !== "object") return;
+    evidence.knownAt = acquiredAt;
+    for (const component of evidence.componentEvidence ?? []) setEvidenceClock(component);
+  };
+  for (const evidence of Object.values(changed.inputs.inputEvidence ?? {})) setEvidenceClock(evidence);
+  return changed;
+}
+
+test("canonical identity preserves clocks outside the proven ephemeral paths", () => {
+  const identity = canonicalEvaluationIdentity({
+    generatedAt: "2026-08-02T00:00:00.000Z",
+    fingerprint: "descriptive-output",
+    knownAt: "2026-08-01T00:00:00.000Z",
+    inputs: {
+      acquisition: { acquiredAt: "2026-08-02T00:00:00.000Z", sourceMaxPublishedAt: "2026-07-31T00:00:00.000Z" },
+      inputEvidence: {
+        revenue: {
+          knownAt: "2026-08-02T00:00:00.000Z",
+          originalKnownAt: "2025-10-31T00:00:00.000Z",
+          componentEvidence: [{ knownAt: "2026-08-02T00:00:00.000Z", filed: "2025-10-31" }],
+        },
+      },
+    },
+    metrics: [{ lineage: [{ evidence: { knownAt: "2026-08-02T00:00:00.000Z", originalKnownAt: "2025-10-31T00:00:00.000Z" } }] }],
+    audit: { knownAt: "2026-07-31T12:00:00.000Z" },
+  });
+  assert.equal(identity.generatedAt, undefined);
+  assert.equal(identity.fingerprint, undefined);
+  assert.equal(identity.inputs.acquisition.acquiredAt, undefined);
+  assert.equal(identity.inputs.inputEvidence.revenue.knownAt, undefined);
+  assert.equal(identity.inputs.inputEvidence.revenue.componentEvidence[0].knownAt, undefined);
+  assert.equal(identity.metrics[0].lineage[0].evidence.knownAt, undefined);
+  assert.equal(identity.knownAt, "2026-08-01T00:00:00.000Z");
+  assert.equal(identity.inputs.acquisition.sourceMaxPublishedAt, "2026-07-31T00:00:00.000Z");
+  assert.equal(identity.inputs.inputEvidence.revenue.originalKnownAt, "2025-10-31T00:00:00.000Z");
+  assert.equal(identity.metrics[0].lineage[0].evidence.originalKnownAt, "2025-10-31T00:00:00.000Z");
+  assert.equal(identity.audit.knownAt, "2026-07-31T12:00:00.000Z");
+});
+
+test("quarterly canonical identity excludes only the acquisition clock", async () => {
+  const prior = await annualPublication();
+  const firstClock = "2026-08-01T00:00:00.000Z";
+  const secondClock = "2026-08-02T00:00:00.000Z";
+  const first = await evaluateQuarterlyAssembly({
+    assembly: withAssemblyAcquisitionClock(quarterlyAssembly("q-clock"), firstClock),
+    priorAnnualPublication: prior,
+    sharePrice: microsoftFiscal2025.sharePrice,
+    marketObservationDate: "2025-09-30",
+    marketUrl: microsoftFiscal2025.marketUrl,
+  });
+  const second = await evaluateQuarterlyAssembly({
+    assembly: withAssemblyAcquisitionClock(quarterlyAssembly("q-clock"), secondClock),
+    priorAnnualPublication: prior,
+    sharePrice: microsoftFiscal2025.sharePrice,
+    marketObservationDate: "2025-09-30",
+    marketUrl: microsoftFiscal2025.marketUrl,
+  });
+  assert.equal(first.evaluation.inputs.acquisition.acquiredAt, firstClock);
+  assert.equal(second.evaluation.inputs.acquisition.acquiredAt, secondClock);
+  assert.notEqual(first.evaluation.inputs.inputEvidence.revenue.knownAt, second.evaluation.inputs.inputEvidence.revenue.knownAt);
+  assert.equal(first.evaluation.fingerprint, second.evaluation.fingerprint);
+  assert.deepEqual(canonicalEvaluationIdentity(first.evaluation), canonicalEvaluationIdentity(second.evaluation));
+});
+
 test("P/E and its scored rule carry exactly with annual provenance and continue coverage", async () => {
   const prior = await annualPublication();
   const result = await evaluateQuarterlyAssembly({ assembly: quarterlyAssembly(), priorAnnualPublication: prior, sharePrice: microsoftFiscal2025.sharePrice, marketObservationDate: "2025-09-30", marketUrl: microsoftFiscal2025.marketUrl });
@@ -229,6 +298,7 @@ test("authority changes fingerprint even when the numerical score is unchanged",
   const second = await evaluateQuarterlyAssembly({ assembly: quarterlyAssembly("q-b"), priorAnnualPublication: prior, sharePrice: microsoftFiscal2025.sharePrice, marketObservationDate: "2025-09-30", marketUrl: microsoftFiscal2025.marketUrl });
   assert.equal(first.evaluation.scoring.overallScore, second.evaluation.scoring.overallScore);
   assert.notEqual(first.evaluation.fingerprint, second.evaluation.fingerprint);
+  assert.notDeepEqual(canonicalEvaluationIdentity(first.evaluation), canonicalEvaluationIdentity(second.evaluation));
 });
 
 test("unsupported quarterly evidence produces the explicit withheld outcome", () => {

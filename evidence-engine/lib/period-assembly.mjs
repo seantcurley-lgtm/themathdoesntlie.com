@@ -12,6 +12,7 @@ import {
 } from "./calculation-registry.mjs";
 import { evaluateInputs } from "./evidence-engine.mjs";
 import { SCORING_VERSION, scoreEvaluation } from "./evidence-scoring.mjs";
+import { canonicalEvaluationIdentity } from "./evaluation-identity.mjs";
 import { sha256Text, stableSerialize } from "./longitudinal-state.mjs";
 
 export const PERIOD_ASSEMBLY_VERSION = "1.0.0";
@@ -745,10 +746,7 @@ async function finalizeQuarterlyEvaluation({ base, carried, periodAssembly }) {
     periodCompatibilityVersion: PERIOD_COMPATIBILITY_VERSION,
     periodAssembly,
   };
-  const fingerprintIdentity = { ...evaluation };
-  delete fingerprintIdentity.generatedAt;
-  delete fingerprintIdentity.fingerprint;
-  evaluation.fingerprint = await sha256Text(stableSerialize(fingerprintIdentity));
+  evaluation.fingerprint = await sha256Text(stableSerialize(canonicalEvaluationIdentity(evaluation)));
   return { status: "Evaluated", evaluation };
 }
 
