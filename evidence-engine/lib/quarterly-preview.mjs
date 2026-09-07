@@ -210,6 +210,28 @@ export async function buildResolvedQuarterlyPreview({
   };
 }
 
+export function resolveMarketReference({
+  market,
+  ticker,
+  revision,
+  repository = "themathdoesntlie/themathdoesntlie.com",
+  priorPublication = null,
+}) {
+  const normalizedTicker = String(ticker).toUpperCase();
+  const observationDate = String(market?.lastQuoteRefresh ?? "").slice(0, 10);
+  const observationId = `${market?.provider}:${normalizedTicker}:${observationDate}`;
+  const priorEvaluation = priorPublication?.evaluation;
+  const priorReference = priorEvaluation?.inputs?.marketUrl;
+  const sameGovernedObservation = priorPublication?.freshness?.marketObservationId === observationId
+    && priorEvaluation?.ticker === normalizedTicker
+    && priorEvaluation?.inputs?.marketObservationDate === observationDate
+    && priorEvaluation?.inputs?.sharePrice === market?.price;
+  if (sameGovernedObservation && typeof priorReference === "string" && priorReference.length > 0) {
+    return priorReference;
+  }
+  return `https://github.com/${repository}/blob/${revision}/covered-call-lab/market-data.json`;
+}
+
 export async function createLiveQuarterlyPreview({ ticker, priorAnnualPublication = null, now = () => new Date(), revision = process.env.GITHUB_SHA ?? "working-tree" }) {
   const tickerRecord = resolveTicker(tickerDirectory, ticker);
   const normalizedTicker = tickerRecord.ticker.toUpperCase();
@@ -238,7 +260,13 @@ export async function createLiveQuarterlyPreview({ ticker, priorAnnualPublicatio
     throw new Error(`Governed annual acquisition was withheld: ${JSON.stringify(annualAcquisition.summary)}`);
   }
   const repository = process.env.GITHUB_REPOSITORY ?? "themathdoesntlie/themathdoesntlie.com";
-  const marketReference = `https://github.com/${repository}/blob/${revision}/covered-call-lab/market-data.json`;
+  const marketReference = resolveMarketReference({
+    market,
+    ticker: normalizedTicker,
+    revision,
+    repository,
+    priorPublication: priorAnnualPublication,
+  });
   return buildResolvedQuarterlyPreview({
     ticker: normalizedTicker,
     company: submissions.name ?? tickerRecord.title ?? normalizedTicker,

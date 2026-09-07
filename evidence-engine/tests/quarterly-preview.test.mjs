@@ -14,6 +14,7 @@ import {
   readPriorResultArtifact,
   renderMetricInspectionTable,
   renderQuarterlyPreview,
+  resolveMarketReference,
   serializeQuarterlyPreview,
 } from "../lib/quarterly-preview.mjs";
 
@@ -80,6 +81,63 @@ test("preview invokes production quarterly assembly and is deterministic for fix
   assert.equal(first.assembly.inputs.inputEvidence.revenue.periodBasis, "TrailingTwelveMonths");
   assert.equal(first.evaluation.fingerprint, second.evaluation.fingerprint);
   assert.equal(first.preview.authoritativeStateWritten, false);
+});
+
+test("unchanged governed market evidence preserves its prior immutable reference across code revisions", () => {
+  const fixture = resolvedFixture();
+  const priorReference = "https://github.com/themathdoesntlie/themathdoesntlie.com/blob/a6bfd70fa048fa95ed205827014a540e188b442f/covered-call-lab/market-data.json";
+  const priorPublication = {
+    freshness: { marketObservationId: "Fixture:AAPL:2026-07-31" },
+    evaluation: {
+      ticker: "AAPL",
+      inputs: {
+        sharePrice: fixture.market.price,
+        marketObservationDate: "2026-07-31",
+        marketUrl: priorReference,
+      },
+    },
+  };
+  assert.equal(resolveMarketReference({
+    market: fixture.market,
+    ticker: "AAPL",
+    revision: "ae49da06b45e793d9ae16de766eb21397c1cb377",
+    priorPublication,
+  }), priorReference);
+});
+
+test("market-reference reuse fails closed for genuine governed market differences", () => {
+  const fixture = resolvedFixture();
+  const revision = "ae49da06b45e793d9ae16de766eb21397c1cb377";
+  const generatedReference = `https://github.com/themathdoesntlie/themathdoesntlie.com/blob/${revision}/covered-call-lab/market-data.json`;
+  const priorPublication = {
+    freshness: { marketObservationId: "Fixture:AAPL:2026-07-31" },
+    evaluation: {
+      ticker: "AAPL",
+      inputs: {
+        sharePrice: fixture.market.price,
+        marketObservationDate: "2026-07-31",
+        marketUrl: "https://market.example/prior-snapshot",
+      },
+    },
+  };
+  assert.equal(resolveMarketReference({
+    market: { ...fixture.market, price: fixture.market.price + 1 },
+    ticker: "AAPL",
+    revision,
+    priorPublication,
+  }), generatedReference);
+  assert.equal(resolveMarketReference({
+    market: { ...fixture.market, lastQuoteRefresh: "2026-08-01T20:00:00.000Z" },
+    ticker: "AAPL",
+    revision,
+    priorPublication,
+  }), generatedReference);
+  assert.equal(resolveMarketReference({
+    market: { ...fixture.market, provider: "ChangedProvider" },
+    ticker: "AAPL",
+    revision,
+    priorPublication,
+  }), generatedReference);
 });
 
 test("human rendering includes A/B/C inspection, transformed TTM detail, and unavailable P/E", async () => {
