@@ -1,0 +1,80 @@
+name: Qualify AAPL Evidence Engine reuse
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qualify-aapl-evidence-engine-reuse
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Verify reviewed workflow-only descendant
+        env:
+          REVIEWED_CODE_COMMIT: c496050872f71def796f8c2689f62c73a856953a
+          WORKFLOW_PATH: .github/workflows/qualify-aapl-reuse.yml
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$REVIEWED_CODE_COMMIT"
+          test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = "$WORKFLOW_PATH"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: evidence-engine/package-lock.json
+
+      - name: Install pinned Evidence Engine dependencies
+        working-directory: evidence-engine
+        run: npm ci
+
+      - name: Execute and verify the single AAPL reuse qualification
+        working-directory: evidence-engine
+        env:
+          EVIDENCE_ENGINE_STATE_ENDPOINT: https://tmdl-evidence-engine.sean-t-curley.workers.dev
+          EVIDENCE_ENGINE_PUBLICATION_TOKEN: ${{ secrets.EVIDENCE_ENGINE_PUBLICATION_TOKEN }}
+        run: |
+          set -euo pipefail
+          result_file="$RUNNER_TEMP/aapl-reuse-qualification.json"
+          node scripts/publish-single-issuer.mjs AAPL --confirm-authoritative-publication --json > "$result_file"
+          node --input-type=module - "$result_file" <<'NODE'
+          import { readFile } from "node:fs/promises";
+
+          const result = JSON.parse(await readFile(process.argv[2], "utf8"));
+          const expected = {
+            disposition: "ReusedExactAuthoritativeInput",
+            publicationStatus: "Reused",
+            resultId: "eer_e04420a081bae82543bb07b58de433b3cb96cc0ee449655a73cb1ab98d2979ae",
+            stateFingerprint: "e04420a081bae82543bb07b58de433b3cb96cc0ee449655a73cb1ab98d2979ae",
+            recordHash: "8aba46368f56fda8037b9fa0b02323c37afd3937fe3abe71292b4a6c8bc72f7a",
+            sourceManifestId: "esm_704dde4294ea33537b9fd87ff4d38869308b3291430258a50d9041283eec6a21",
+            sourceManifestHash: "704dde4294ea33537b9fd87ff4d38869308b3291430258a50d9041283eec6a21",
+          };
+          const actual = {
+            disposition: result.summary?.disposition,
+            publicationStatus: result.result?.publicationStatus,
+            resultId: result.result?.resultId,
+            stateFingerprint: result.result?.stateFingerprint,
+            recordHash: result.result?.recordHash,
+            sourceManifestId: result.result?.sourceManifestId,
+            sourceManifestHash: result.result?.sourceManifestHash,
+          };
+          const mismatches = Object.entries(expected)
+            .filter(([key, value]) => actual[key] !== value)
+            .map(([key, value]) => ({ field: key, expected: value, actual: actual[key] ?? null }));
+          if (mismatches.length > 0) {
+            console.error(JSON.stringify({ qualification: "FAIL", mismatches, actual }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ qualification: "PASS", ...actual }, null, 2));
+          NODE
