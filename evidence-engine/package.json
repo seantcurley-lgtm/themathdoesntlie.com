@@ -15,6 +15,7 @@
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
     "ee:preview-quarterly": "node scripts/preview-quarterly.mjs",
+    "ee:publish-single-issuer": "node scripts/publish-single-issuer.mjs",
     "generate:longitudinal": "node scripts/run-longitudinal-generation.mjs"
   },
   "dependencies": {

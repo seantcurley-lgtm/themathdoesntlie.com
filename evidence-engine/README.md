@@ -30,6 +30,22 @@ npm run ee:preview-quarterly -- AAPL
 
 The command uses the governed market snapshot and the same SEC selection, annual acquisition, quarterly period assembly, calculation, scoring, and source-manifest modules as prospective generation. It is read-only and labels every result `LOCAL PREVIEW — NOT AN AUTHORITATIVE PUBLISHED STATE`. Use `--json` for complete machine-readable evidence and provenance, `--out <path>` to save that JSON locally, and `--prior-result <path>` only when an exact legitimate prior Evidence Result artifact is available for annual P/E carry authority.
 
+## Controlled single-issuer authoritative publication
+
+Initial production qualification and targeted diagnostics use a separate, exactly-one-ticker publisher. It reuses the read-only live SEC acquisition and quarterly assembly path, constructs the Result with the production longitudinal authority module, and writes only by authenticated `POST` to the configured state service:
+
+```bash
+EVIDENCE_ENGINE_STATE_ENDPOINT=https://configured-authority.example \
+EVIDENCE_ENGINE_PUBLICATION_TOKEN='<operator-provided-secret>' \
+npm run ee:publish-single-issuer -- AAPL --confirm-authoritative-publication
+```
+
+Both environment values and the explicit `--confirm-authoritative-publication` guard are required. The endpoint must be HTTPS, the token must contain at least 32 characters, and lists, wildcards, universe aliases, and multiple tickers are rejected. In local operation the command also requires a clean committed working tree and resolves its exact Git revision; CI may supply the exact `GITHUB_SHA`. This keeps the governed market-snapshot reference immutable. `--json` emits the final summary as JSON while the pre-publication inspection remains on stderr. Neither format includes the token.
+
+An unchanged acquisition is resubmitted only when it exactly matches the current Result's evaluation fingerprint, annual and quarterly accessions, quarterly source hash, and market-observation identity. The state service then returns `Reused` only under its existing matching-fingerprint and matching-record-hash contract. Any mismatch fails closed; there is no update, delete, overwrite, repair, bulk, or scheduler path in this command.
+
+This command creates real immutable authority. Do not invoke it against production until dormant deployment, smoke testing, the separately authorized default-off migration, credential provisioning, and HuMAn review are complete. The scheduler remains independently gated by `EVIDENCE_ENGINE_LONGITUDINAL_ENABLED=true`.
+
 ## Release 6.5 TMDL Product Integration
 
 Release 6.5 connects the workbench to The Math Doesn't Lie shared security universe. A validated TMDL launch may prefill ticker and dated market evidence while the Evidence Engine independently verifies SEC identity and filing evidence. The application is `6.5.0`; the calculation engine, acquisition mapper, scoring policy, and governed registries remain at their Release 6.4 identities because no methodology changed. See `docs/RELEASE_6_5_TMDL_INTEGRATION.md`.

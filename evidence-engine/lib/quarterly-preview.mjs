@@ -210,7 +210,7 @@ export async function buildResolvedQuarterlyPreview({
   };
 }
 
-export async function createLiveQuarterlyPreview({ ticker, priorAnnualPublication = null, now = () => new Date() }) {
+export async function createLiveQuarterlyPreview({ ticker, priorAnnualPublication = null, now = () => new Date(), revision = process.env.GITHUB_SHA ?? "working-tree" }) {
   const tickerRecord = resolveTicker(tickerDirectory, ticker);
   const normalizedTicker = tickerRecord.ticker.toUpperCase();
   const securityId = normalizeSecurityId(tickerRecord.cik);
@@ -238,7 +238,6 @@ export async function createLiveQuarterlyPreview({ ticker, priorAnnualPublicatio
     throw new Error(`Governed annual acquisition was withheld: ${JSON.stringify(annualAcquisition.summary)}`);
   }
   const repository = process.env.GITHUB_REPOSITORY ?? "themathdoesntlie/themathdoesntlie.com";
-  const revision = process.env.GITHUB_SHA ?? "working-tree";
   const marketReference = `https://github.com/${repository}/blob/${revision}/covered-call-lab/market-data.json`;
   return buildResolvedQuarterlyPreview({
     ticker: normalizedTicker,
