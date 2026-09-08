@@ -85,7 +85,7 @@ function evidenceLaunchUrl(row){
   if(Number(row.price)>0)params.set('price',String(row.price));
   const observed=row.lastQuoteRefresh||row.lastRefresh;
   if(observed){const date=new Date(observed);if(!Number.isNaN(date.valueOf()))params.set('marketDate',date.toISOString().slice(0,10))}
-  return`https://tmdl-evidence-engine.sean-t-curley.workers.dev/?${params.toString()}`;
+  return`https://ee.themathdoesntlie.com/?${params.toString()}`;
 }
 function universePageV28(){
   const census=window.MDLEvidenceCensus||{population:0,scored:0,records:{}};
