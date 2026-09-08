@@ -27,6 +27,9 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       EVIDENCE_ENGINE_D1_DATABASE_ID: ${{ secrets.EVIDENCE_ENGINE_D1_DATABASE_ID }}
+      EVIDENCE_ENGINE_READER_HOST: ${{ vars.EVIDENCE_ENGINE_READER_HOST }}
+      CF_ACCESS_TEAM_DOMAIN: ${{ vars.CF_ACCESS_TEAM_DOMAIN }}
+      CF_ACCESS_AUD: ${{ vars.CF_ACCESS_AUD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

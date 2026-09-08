@@ -1,13 +1,12 @@
 import { env } from "cloudflare:workers";
-import { and, desc, eq, gt, isNull, lt, lte, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { evaluationRecords, securityAliases, sourceManifests } from "@/db/schema";
-import { LONGITUDINAL_STATE_SCHEMA_VERSION, NO_AUTHORITATIVE_STATE, createLongitudinalPublication, normalizeSecurityId, sha256Text, stableSerialize, verifyBearerAuthorization } from "@/lib/longitudinal-state.mjs";
+import { performAuthoritativeRead, summarizeAuthoritativeRecord } from "@/lib/authoritative-read";
+import { LONGITUDINAL_STATE_SCHEMA_VERSION, createLongitudinalPublication, normalizeSecurityId, sha256Text, stableSerialize, verifyBearerAuthorization } from "@/lib/longitudinal-state.mjs";
 
 export const runtime = "edge";
 const MAX_RECORD_BYTES = 2_000_000;
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100;
 
 type Publication = Record<string, unknown> & {
   resultId: string; securityId: string; tickerAtState: string; knownAt: string; publishedAt: string;
@@ -38,78 +37,17 @@ function unauthorized() {
   return Response.json({ error: "Controlled Evidence Engine state access requires job authorization." }, { status: 403 });
 }
 
-function summary(row: typeof evaluationRecords.$inferSelect) {
-  let exactFreshness: Record<string, unknown> | null = null;
-  try {
-    const exact = JSON.parse(row.recordJson) as Record<string, unknown>;
-    exactFreshness = exact.freshness && typeof exact.freshness === "object"
-      ? exact.freshness as Record<string, unknown>
-      : null;
-  } catch {
-    exactFreshness = null;
-  }
-  return {
-    resultId: row.id, securityId: row.securityId, tickerAtState: row.ticker,
-    knownAt: row.knownAt, publishedAt: row.publishedAt, sourceMaxPublishedAt: row.sourceMaxPublishedAt,
-    eventType: row.eventType, supersedesResultId: row.supersedesResultId,
-    sourceManifestId: row.sourceManifestId, stateFingerprint: row.stateFingerprint, recordHash: row.recordHash,
-    scoringStatus: row.scoringStatus, score: row.overallScore,
-    coverage: { kind: "WeightedScoreability", weightedScoreabilityPercent: row.coveragePercent, includesFreshness: false },
-    freshness: { latestAnnualFilingFiledDate: row.filingDate, latestAnnualFilingAccession: row.accessionNumber, marketObservationDate: row.marketObservationDate, marketObservationId: row.marketObservationId, oldestContributingEvidenceDate: row.oldestEvidenceDate, sourceMaxPublishedAt: row.sourceMaxPublishedAt, ...(exactFreshness ?? {}) },
-    versions: { engineVersion: row.engineVersion, publicationSchemaVersion: row.publicationSchemaVersion, canonicalRegistryVersion: row.canonicalRegistryVersion, calculationRegistryVersion: row.calculationRegistryVersion, aliasRegistryVersion: row.aliasRegistryVersion, scoringVersion: row.scoringVersion },
-    companyName: row.companyName, periodStart: row.periodStart, periodEnd: row.periodEnd,
-  };
-}
-
 function failure(error: unknown) {
   const message = error instanceof Error ? error.message : "Evaluation state request failed.";
   const missing = message.includes("no such table") || message.includes("no column named") || message.includes("has no column named");
   return Response.json({ error: missing ? "The authoritative state migration has not been applied." : message }, { status: missing ? 503 : 400 });
 }
 
-async function exactRecord(id: string) {
-  const db = getDb();
-  const [row] = await db.select().from(evaluationRecords).where(eq(evaluationRecords.id, id)).limit(1);
-  if (!row) return Response.json({ error: "Evidence Result not found." }, { status: 404 });
-  const hash = await sha256Text(row.recordJson);
-  if (hash !== row.recordHash) return Response.json({ error: "Immutable Evidence Result integrity verification failed.", code: "IntegrityConflict" }, { status: 500 });
-  return Response.json({ record: { ...summary(row), exactRecord: JSON.parse(row.recordJson), integrity: { status: "Verified", algorithm: "SHA-256", recordHash: hash } } });
-}
-
 export async function GET(request: Request) {
   if (!(await authorized(request))) return unauthorized();
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id")?.trim();
-    if (id) return exactRecord(id);
-    const asOf = url.searchParams.get("asOf")?.trim();
-    const securityParam = url.searchParams.get("securityId")?.trim();
-    const ticker = url.searchParams.get("ticker")?.trim().toUpperCase();
-    const db = getDb();
-    if (asOf) {
-      const timestamp = isoValue(asOf, "asOf");
-      let securityId = securityParam ? normalizeSecurityId(securityParam) : null;
-      if (!securityId && ticker) {
-        const aliases = await db.select().from(securityAliases).where(and(eq(securityAliases.ticker, ticker), lte(securityAliases.validFrom, timestamp), or(isNull(securityAliases.validTo), gt(securityAliases.validTo, timestamp)))).limit(2);
-        if (new Set(aliases.map((item) => item.securityId)).size === 1) securityId = aliases[0].securityId;
-      }
-      if (!securityId) return Response.json({ kind: NO_AUTHORITATIVE_STATE, asOf: timestamp, securityId: null });
-      const [row] = await db.select().from(evaluationRecords).where(and(eq(evaluationRecords.securityId, securityId), lte(evaluationRecords.knownAt, timestamp))).orderBy(desc(evaluationRecords.knownAt), desc(evaluationRecords.publishedAt)).limit(1);
-      if (!row) return Response.json({ kind: NO_AUTHORITATIVE_STATE, asOf: timestamp, securityId });
-      return Response.json({ kind: "AuthoritativeState", asOf: timestamp, securityId, record: summary(row) });
-    }
-    const parsedLimit = Number.parseInt(url.searchParams.get("limit") ?? "", 10);
-    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), MAX_LIMIT) : DEFAULT_LIMIT;
-    const cursor = url.searchParams.get("cursor")?.trim();
-    const baseWhere = securityParam ? eq(evaluationRecords.securityId, normalizeSecurityId(securityParam)) : ticker ? eq(evaluationRecords.ticker, ticker) : undefined;
-    const separator = cursor?.indexOf("|") ?? -1;
-    const cursorPublishedAt = separator > 0 ? cursor?.slice(0, separator) : null;
-    const cursorId = separator > 0 ? cursor?.slice(separator + 1) : null;
-    const cursorWhere = cursorPublishedAt && cursorId ? or(lt(evaluationRecords.publishedAt, cursorPublishedAt), and(eq(evaluationRecords.publishedAt, cursorPublishedAt), lt(evaluationRecords.id, cursorId))) : undefined;
-    const where = baseWhere && cursorWhere ? and(baseWhere, cursorWhere) : baseWhere ?? cursorWhere;
-    const rows = await db.select().from(evaluationRecords).where(where).orderBy(desc(evaluationRecords.publishedAt), desc(evaluationRecords.id)).limit(limit + 1);
-    const page = rows.slice(0, limit);
-    return Response.json({ records: page.map(summary), count: page.length, nextCursor: rows.length > limit ? `${page.at(-1)?.publishedAt}|${page.at(-1)?.id}` : null, immutable: true, recordSchemaVersion: LONGITUDINAL_STATE_SCHEMA_VERSION });
+    const result = await performAuthoritativeRead(request);
+    return Response.json(result.body, { status: result.status ?? 200 });
   } catch (error) { return failure(error); }
 }
 
@@ -141,7 +79,7 @@ export async function POST(request: Request) {
     const [existing] = await db.select().from(evaluationRecords).where(eq(evaluationRecords.stateFingerprint, stateFingerprint)).limit(1);
     if (existing) {
       if (existing.recordHash !== recordHash) return Response.json({ error: "stateFingerprint already exists with a different exact-record hash.", code: "IntegrityConflict" }, { status: 409 });
-      return Response.json({ record: summary(existing), created: false });
+      return Response.json({ record: summarizeAuthoritativeRecord(existing), created: false });
     }
     await db.insert(sourceManifests).values({ id: publication.sourceManifestId, securityId, manifestHash: publication.sourceManifestHash, acquiredAt: isoValue(sourceManifest.acquiredAt, "sourceManifest.acquiredAt"), manifestJson }).onConflictDoNothing({ target: sourceManifests.manifestHash });
     const scoring = evaluation.scoring as Record<string, unknown> | undefined;
@@ -171,9 +109,9 @@ export async function POST(request: Request) {
       const [raced] = await db.select().from(evaluationRecords).where(eq(evaluationRecords.stateFingerprint, stateFingerprint)).limit(1);
       if (!raced) throw insertError;
       if (raced.recordHash !== recordHash) return Response.json({ error: "Concurrent publication produced a state fingerprint/exact-record hash conflict.", code: "IntegrityConflict" }, { status: 409 });
-      return Response.json({ record: summary(raced), created: false });
+      return Response.json({ record: summarizeAuthoritativeRecord(raced), created: false });
     }
-    return Response.json({ record: summary(inserted[0]), created: true }, { status: 201 });
+    return Response.json({ record: summarizeAuthoritativeRecord(inserted[0]), created: true }, { status: 201 });
   } catch (error) {
     if (error instanceof SyntaxError) return Response.json({ error: "Request body is not valid JSON." }, { status: 400 });
     return failure(error);

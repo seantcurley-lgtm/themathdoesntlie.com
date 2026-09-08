@@ -20,6 +20,7 @@ import { CANONICAL_REGISTRY_VERSION } from "@/lib/canonical-registry.mjs";
 import { CALCULATION_REGISTRY_VERSION } from "@/lib/calculation-registry.mjs";
 import { ALIAS_REGISTRY_VERSION } from "@/lib/alias-registry.mjs";
 import { parseTmdlMarketContext } from "@/lib/tmdl-context.mjs";
+import { AuthoritativeReadError, authoritativeDisplay, loadCurrentAuthority, type AuthoritativeRecordDetail } from "@/lib/authoritative-client";
 
 type InputMap = Record<string, string | number | null>;
 type LineageItem = {
@@ -160,7 +161,8 @@ type Evaluation = {
 const navItems = [
   ["overview", "Overview", "Evaluation summary"],
   ["scoring", "Scoring", "Rules & awarded points"],
-  ["acquire", "Load company", "SEC filing lookup"],
+  ["history", "History", "Authoritative Results"],
+  ["acquire", "Fresh analysis", "Ad-hoc · not published"],
   ["evidence", "Evidence", "Up to 30 measurements"],
   ["inputs", "Inputs", "Governed dataset"],
   ["methodology", "Methodology", "Formulas & lineage"],
@@ -777,6 +779,8 @@ function InputsView({
   onChange,
   onRun,
   onReset,
+  readOnly,
+  onStartFresh,
 }: {
   inputs: InputMap;
   errors: Record<string, string>;
@@ -784,20 +788,22 @@ function InputsView({
   onChange: (key: string, value: string | number | null) => void;
   onRun: () => void;
   onReset: () => void;
+  readOnly: boolean;
+  onStartFresh: () => void;
 }) {
   return (
     <div className="view-stack input-view">
       <section className="view-intro">
         <div>
-          <p className="section-kicker">Governed dataset</p>
+          <p className="section-kicker">{readOnly ? "Authoritative inputs · read-only" : "Fresh / ad-hoc · not published"}</p>
           <h1>Evaluation inputs</h1>
           <p>Financial statement values use the reporting basis shown below.</p>
         </div>
         <div className="input-actions">
-          <button className="secondary-button" onClick={onReset}>Restore Microsoft example</button>
-          <button className="primary-button" onClick={onRun}>
-            {dirty ? "Run updated evaluation" : "Run evaluation"}
-          </button>
+          {readOnly ? <button className="primary-button" onClick={onStartFresh}>Edit as fresh analysis</button> : <>
+            <button className="secondary-button" onClick={onReset}>Restore Microsoft example</button>
+            <button className="primary-button" onClick={onRun}>{dirty ? "Run updated evaluation" : "Run evaluation"}</button>
+          </>}
         </div>
       </section>
 
@@ -829,6 +835,7 @@ function InputsView({
                   value={inputs[key] ?? ""}
                   aria-invalid={Boolean(errors[key])}
                   aria-describedby={errors[key] ? `${key}-error` : undefined}
+                  readOnly={readOnly}
                   onChange={(event) =>
                     onChange(
                       key,
@@ -997,6 +1004,21 @@ function MetricDrawer({ metric, onClose }: { metric: Metric | null; onClose: () 
   );
 }
 
+function AuthorityContext({ record }: { record: AuthoritativeRecordDetail }) {
+  const display = authoritativeDisplay(record);
+  const sourceManifestHash = String((record.exactRecord as Record<string, unknown>).sourceManifestHash ?? "");
+  return <section className="principle-panel" aria-label="Authoritative Result identity">
+    <div><p className="section-kicker">Authoritative Result</p><h2>{display.securityId}</h2><p>TTM ending {display.periodEnd} · Market price ${Number(display.marketPrice).toFixed(2)} · Market date {String(display.marketDate)}</p></div>
+    <p><strong>Stored scoreability:</strong> {display.scoreability} · {display.coveragePercent}% coverage · Score {display.score ?? "unavailable"}</p>
+    <p><strong>Known at:</strong> <code>{record.knownAt}</code> · <strong>Published:</strong> <code>{record.publishedAt}</code></p>
+    <p><strong>Result ID:</strong> <code>{record.resultId}</code></p>
+    <p><strong>State fingerprint:</strong> <code>{record.stateFingerprint}</code> · <strong>Evaluation fingerprint:</strong> <code>{record.evaluationFingerprint}</code></p>
+    <p><strong>Record hash:</strong> <code>{record.recordHash}</code></p>
+    <p><strong>Source manifest:</strong> <code>{record.sourceManifestId}</code>{sourceManifestHash ? <> · <code>{sourceManifestHash}</code></> : null}</p>
+    <p><strong>Recorded versions:</strong> {Object.entries(record.versions).map(([key, value]) => `${key} ${value}`).join(" · ")}</p>
+  </section>;
+}
+
 export default function EvidenceWorkbench() {
   const [inputs, setInputs] = useState<InputMap>(cloneSample);
   const [result, setResult] = useState<Evaluation | null>(null);
@@ -1007,16 +1029,14 @@ export default function EvidenceWorkbench() {
   const [dirty, setDirty] = useState(false);
   const [running, setRunning] = useState(true);
   const [notice, setNotice] = useState("");
-  const [historyRefreshToken, setHistoryRefreshToken] = useState(0);
-  const [savingRecord, setSavingRecord] = useState(false);
-  const [loadedRecord, setLoadedRecord] = useState<{
-    id: string;
-    savedAt: string;
-    fingerprint: string;
-  } | null>(null);
+  const [authorityMode, setAuthorityMode] = useState<"loading" | "authoritative" | "empty" | "error" | "fresh">("loading");
+  const [authorityError, setAuthorityError] = useState("");
+  const [selectedTicker, setSelectedTicker] = useState(String(cloneSample().ticker));
+  const [loadedRecord, setLoadedRecord] = useState<AuthoritativeRecordDetail | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const runEvaluation = async (nextInputs = inputs) => {
+    if (authorityMode === "authoritative") return;
     const nextErrors = validateInputs(nextInputs);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
@@ -1029,6 +1049,7 @@ export default function EvidenceWorkbench() {
       const nextResult = (await evaluateInputs(nextInputs)) as Evaluation;
       setResult(nextResult);
       setLoadedRecord(null);
+      setAuthorityMode("fresh");
       setDirty(false);
       setNotice("Evaluation complete. Results and fingerprint updated.");
     } finally {
@@ -1040,11 +1061,27 @@ export default function EvidenceWorkbench() {
     let active = true;
     const launchContext = parseTmdlMarketContext(window.location.search);
     const sample = cloneSample();
-    void evaluateInputs(sample).then((nextResult) => {
+    void Promise.resolve().then(async () => {
+      if (launchContext.ticker) {
+        if (!active) return;
+        setSelectedTicker(launchContext.ticker);
+        setInputs({ ...sample, ticker: launchContext.ticker, companyName: launchContext.company || launchContext.ticker, periodStart: "", periodEnd: "" });
+        const state = await loadCurrentAuthority(launchContext.ticker, new Date().toISOString());
+        if (!active) return;
+        if (state.kind === "empty") {
+          setAuthorityMode("empty"); setResult(null); setRunning(false); return;
+        }
+        const exactResult = state.record.exactRecord.evaluation as unknown as Evaluation;
+        setResult(exactResult); setInputs(exactResult.inputs); setLoadedRecord(state.record);
+        setAuthorityMode("authoritative"); setRunning(false); setActiveView("overview");
+      } else {
+        const nextResult = await evaluateInputs(sample);
+        if (active) { setAuthorityMode("fresh"); setResult(nextResult as Evaluation); setRunning(false); }
+      }
+    }).catch((caught) => {
       if (!active) return;
-      if (launchContext.ticker) setActiveView("acquire");
-      setResult(nextResult as Evaluation);
-      setRunning(false);
+      setAuthorityError(caught instanceof AuthoritativeReadError ? caught.message : "Authoritative state is unavailable.");
+      setAuthorityMode("error"); setResult(null); setRunning(false);
     });
     return () => {
       active = false;
@@ -1063,6 +1100,7 @@ export default function EvidenceWorkbench() {
   );
 
   const changeInput = (key: string, value: string | number | null) => {
+    if (authorityMode === "authoritative") return;
     setInputs((current) => {
       const currentEvidence = (
         current as unknown as { inputEvidence?: Record<string, Record<string, unknown>> }
@@ -1086,6 +1124,7 @@ export default function EvidenceWorkbench() {
     });
     setDirty(true);
     setLoadedRecord(null);
+    setAuthorityMode("fresh");
     setErrors((current) => {
       const next = { ...current };
       delete next[key];
@@ -1099,6 +1138,7 @@ export default function EvidenceWorkbench() {
     setErrors({});
     setDirty(true);
     setLoadedRecord(null);
+    setAuthorityMode("fresh");
     setNotice("Microsoft FY2025 baseline restored. Run to refresh results.");
   };
 
@@ -1109,6 +1149,7 @@ export default function EvidenceWorkbench() {
       setInputs({ ...cloneSample(), ...imported });
       setDirty(true);
       setLoadedRecord(null);
+      setAuthorityMode("fresh");
       setErrors({});
       setActiveView("inputs");
       setNotice("Inputs imported. Review the dataset, then run the evaluation.");
@@ -1141,6 +1182,7 @@ export default function EvidenceWorkbench() {
       setErrors({});
       setDirty(true);
       setLoadedRecord(null);
+      setAuthorityMode("fresh");
       setActiveView("inputs");
       setNotice(`Loaded ${snapshot.label ?? "saved"} inputs. Run to refresh results.`);
     } catch {
@@ -1165,6 +1207,7 @@ export default function EvidenceWorkbench() {
     const typedInputs = nextInputs as unknown as InputMap;
     setInputs(typedInputs);
     setLoadedRecord(null);
+    setAuthorityMode("fresh");
     setErrors({});
     setDirty(true);
     if (!runWhenValid) {
@@ -1191,51 +1234,26 @@ export default function EvidenceWorkbench() {
     }
   };
 
-  const saveImmutableRecord = async () => {
-    if (!result || dirty) return;
-    setSavingRecord(true);
-    try {
-      const response = await fetch("/api/evaluations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          label: `${result.ticker} ${result.periodEnd}`,
-          evaluation: result,
-        }),
-      });
-      const payload = (await response.json()) as {
-        created?: boolean;
-        error?: string;
-        record?: { id: string; savedAt: string; fingerprint: string };
-      };
-      if (!response.ok || !payload.record) {
-        throw new Error(payload.error ?? "The immutable record could not be saved.");
-      }
-      setLoadedRecord(payload.record);
-      setHistoryRefreshToken((current) => current + 1);
-      setNotice(
-        payload.created
-          ? "Immutable evaluation record saved with its complete evidence and version context."
-          : "This exact fingerprint is already preserved in immutable history.",
-      );
-    } catch (caught) {
-      setNotice(
-        caught instanceof Error ? caught.message : "The immutable record could not be saved.",
-      );
-    } finally {
-      setSavingRecord(false);
-    }
-  };
-
   const loadExactRecord = (record: EvaluationRecordDetail) => {
-    const exactResult = record.evaluation as unknown as Evaluation;
+    const exactResult = record.exactRecord.evaluation as unknown as Evaluation;
     setResult(exactResult);
     setInputs(exactResult.inputs);
     setErrors({});
     setDirty(false);
-    setLoadedRecord({ id: record.id, savedAt: record.savedAt, fingerprint: record.fingerprint });
+    setLoadedRecord(record);
+    setAuthorityMode("authoritative");
+    setSelectedTicker(record.tickerAtState);
     setActiveView("overview");
-    setNotice("Exact immutable publication loaded. No calculation was rerun.");
+    setNotice("Exact authoritative Result loaded. No calculation was rerun.");
+  };
+
+  const startFreshAnalysis = () => {
+    setLoadedRecord(null);
+    setAuthorityMode("fresh");
+    setAuthorityError("");
+    setDirty(true);
+    setActiveView("acquire");
+    setNotice("Fresh / ad-hoc mode started. Work here is not published.");
   };
 
   return (
@@ -1305,7 +1323,8 @@ export default function EvidenceWorkbench() {
               <strong>{inputs.companyName || "Untitled evaluation"}</strong>
               <span>{inputs.periodEnd ? `Period end ${inputs.periodEnd}` : "No reporting period"}</span>
             </div>
-            {loadedRecord && <span className="loaded-record-badge">Immutable record loaded</span>}
+            {loadedRecord && <span className="loaded-record-badge">Authoritative Result</span>}
+            {authorityMode === "fresh" && <span className="loaded-record-badge">Fresh / ad-hoc · not published</span>}
           </div>
           <div className="topbar-actions">
             <button className="secondary-button" onClick={() => fileInputRef.current?.click()}>
@@ -1331,16 +1350,13 @@ export default function EvidenceWorkbench() {
             </div>
             <button
               className="secondary-button save-button"
-              onClick={() => void saveImmutableRecord()}
               disabled
-              title={savingRecord
-                ? "Cloud record operation in progress."
-                : "Public release: use browser drafts or export files. Immutable cloud records are restricted."}
+              title="Publication is deliberately unavailable in the browser."
             >
-              Public mode · local exports
+              Browser publication unavailable
             </button>
-            <button className="primary-button run-button" onClick={() => void runEvaluation()} disabled={running}>
-              {running ? "Evaluating…" : dirty ? "Run updated evaluation" : "Run evaluation"}
+            <button className="primary-button run-button" onClick={() => authorityMode === "authoritative" || authorityMode === "empty" ? startFreshAnalysis() : void runEvaluation()} disabled={running || authorityMode === "error"}>
+              {running ? "Loading…" : authorityMode === "error" ? "Authority unavailable" : authorityMode === "authoritative" || authorityMode === "empty" ? "Run fresh analysis" : dirty ? "Run updated evaluation" : "Run evaluation"}
             </button>
           </div>
         </header>
@@ -1352,29 +1368,34 @@ export default function EvidenceWorkbench() {
         </div>
 
         <div className="workspace-body" aria-live="polite">
-          {!result ? (
-            <div className="loading-state"><span />Preparing governed evaluation…</div>
-          ) : activeView === "overview" ? (
+          {loadedRecord && <AuthorityContext record={loadedRecord} />}
+          {authorityMode === "fresh" && <section className="principle-panel" aria-label="Fresh analysis status"><strong>Fresh / ad-hoc — not published</strong><p>This workspace is separate from persisted authoritative state. Its inputs and calculations are editable and local.</p></section>}
+          {activeView === "history" ? (
+            <EvaluationHistory ticker={selectedTicker || String(inputs.ticker)} securityId={loadedRecord?.securityId} currentResultId={loadedRecord?.resultId} refreshToken={0} onLoadExact={loadExactRecord} onNotice={setNotice} />
+          ) : activeView === "acquire" && authorityMode === "fresh" ? (
+            <SecAcquisition onUseDataset={(nextInputs, runWhenValid) => void applyAcquiredDataset(nextInputs, runWhenValid)} />
+          ) : !result ? (authorityMode === "empty" ? (
+            <section className="empty-history"><strong>No authoritative Result exists for {selectedTicker}</strong><p>No SEC acquisition or local evaluation was run. Start a fresh analysis explicitly if you want an ad-hoc result.</p><button className="primary-button" onClick={startFreshAnalysis}>Run fresh analysis</button></section>
+          ) : authorityMode === "error" ? (
+            <section className="history-error" role="alert"><strong>Authoritative state unavailable</strong><p>{authorityError}</p><p>No local evaluation or SEC acquisition was substituted.</p></section>
+          ) : (
+            <div className="loading-state"><span />Resolving authoritative state…</div>
+          ))
+          : activeView === "overview" ? (
             <Overview
               result={result}
               onOpenMetric={setSelectedMetric}
               onOpenFamily={openFamily}
               onOpenScoring={() => setActiveView("scoring")}
             />
-          ) : activeView === "history" ? (
-            <EvaluationHistory
-              refreshToken={historyRefreshToken}
-              onLoadExact={loadExactRecord}
-              onNotice={setNotice}
-            />
           ) : activeView === "scoring" ? (
             <ScoringView result={result} />
           ) : activeView === "acquire" ? (
-            <SecAcquisition onUseDataset={(nextInputs, runWhenValid) => void applyAcquiredDataset(nextInputs, runWhenValid)} />
+            <section className="empty-history"><strong>Fresh analysis is explicit</strong><p>Leave the authoritative Result before starting SEC acquisition.</p><button className="primary-button" onClick={startFreshAnalysis}>Run fresh analysis</button></section>
           ) : activeView === "evidence" ? (
             <EvidenceTable result={result} family={familyFilter} setFamily={setFamilyFilter} onOpenMetric={setSelectedMetric} />
           ) : activeView === "inputs" ? (
-            <InputsView inputs={inputs} errors={errors} dirty={dirty} onChange={changeInput} onRun={() => void runEvaluation()} onReset={resetMicrosoft} />
+            <InputsView inputs={inputs} errors={errors} dirty={dirty} readOnly={authorityMode === "authoritative"} onStartFresh={startFreshAnalysis} onChange={changeInput} onRun={() => void runEvaluation()} onReset={resetMicrosoft} />
           ) : (
             <MethodologyView onOpenDefinition={openDefinition} />
           )}

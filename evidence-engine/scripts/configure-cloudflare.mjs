@@ -20,6 +20,19 @@ config.d1_databases = [{
   migrations_dir: "drizzle",
 }];
 
+const readerVars = {
+  EVIDENCE_ENGINE_READER_HOST: process.env.EVIDENCE_ENGINE_READER_HOST,
+  CF_ACCESS_TEAM_DOMAIN: process.env.CF_ACCESS_TEAM_DOMAIN,
+  CF_ACCESS_AUD: process.env.CF_ACCESS_AUD,
+};
+const configuredReaderVars = Object.values(readerVars).filter(Boolean).length;
+if (configuredReaderVars > 0 && configuredReaderVars < Object.keys(readerVars).length) {
+  throw new Error("Reader authentication variables must be configured together; refusing a partial Access configuration.");
+}
+if (configuredReaderVars === Object.keys(readerVars).length) {
+  config.vars = { ...(config.vars ?? {}), ...readerVars };
+}
+
 const migrationTarget = new URL("../dist/server/drizzle/", import.meta.url);
 await mkdir(migrationTarget, { recursive: true });
 await cp(new URL("../drizzle/", import.meta.url), migrationTarget, { recursive: true });
