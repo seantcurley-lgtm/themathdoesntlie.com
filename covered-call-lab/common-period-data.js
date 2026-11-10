@@ -1,8 +1,8 @@
-/* Verified local review projection. Sources and definitions are carried with the data. */
+/* Recorded common-period projection. Sources and definitions are carried with the data. */
 window.CCL_COMMON_PERIOD_DATA = {
   "schema": "CCLCommonPeriod/v1",
-  "version": "3.0.1-rc.6",
-  "build": "CCL-FOS-20261106.6",
+  "version": "3.0.1",
+  "build": "CCL-20261110.1",
   "startDate": "2026-03-31",
   "endDate": "2026-11-03",
   "contributions": [

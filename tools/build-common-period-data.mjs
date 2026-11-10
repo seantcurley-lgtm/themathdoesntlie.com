@@ -85,7 +85,7 @@ const limitations=[
  'Benchmark distributions are earned by ex-date; amounts paid after November 3 are receivables, not cash.',
  'All percentages are profit divided by total contributed capital, not time-weighted returns. Contribution-date closes are explicit daily timing proxies.'
 ];
-const result={schema:'CCLCommonPeriod/v1',version:'3.0.1-rc.6',build:'CCL-FOS-20261106.6',startDate:'2026-03-31',endDate:day,
+const result={schema:'CCLCommonPeriod/v1',version:'3.0.1',build:'CCL-20261110.1',startDate:'2026-03-31',endDate:day,
  contributions,totalContributedCapital:capital,benchmarkInputs:sanitize(benchmarkInputs),limitations,recordedNAVBeforeReceivables:totals.endingNAVEstimate,earnedPeriodIncome:round(totals.periodCashIncome+knownReceivables),
  valuationSnapshot:{asOf:day,ledgerThrough:day,holdings,options,combined,accounts:patch.accounts.map(base=>accountValue(base,audit.accounts.find(a=>a.account===base.alias))),fosSnapshot:true,fosCommonPeriod:true,releaseCommentary:'March experiment through November 3. Source-day estimate includes known earned, unpaid dividends and remains before unreported WMT fees.'},
  cashBridge:{historicalDate:'2026-09-04',historicalCashBalance:september,currentDate:day,currentCashBalance:combined.cash,currentCashByAccount:patch.fosUpdate.recordedCashByAccount,postSeptemberCategories:categories,postSeptemberRowCount:postSeptember.length,periodInterest:totals.periodInterest,periodCashIncome:totals.periodCashIncome,legacyRollingIncome:totals.legacyCashIncome,preMarchInterestCarry:.04,november3Movements:cash.daily.find(d=>d.date===day).recordedMovements.map(({account,category,ticker,amount})=>({account,category,ticker,amount}))},
@@ -94,5 +94,5 @@ const result={schema:'CCLCommonPeriod/v1',version:'3.0.1-rc.6',build:'CCL-FOS-20
 };
 const serialized=JSON.stringify(result,null,2);
 assert.ok(!/accountId|householdId|messageId|orderId|[A-Z]:[\\/]/.test(serialized),'browser projection must not contain private source identifiers or local paths');
-fs.writeFileSync(path.join(repo,'covered-call-lab/common-period-data.js'),'/* Verified local review projection. Sources and definitions are carried with the data. */\nwindow.CCL_COMMON_PERIOD_DATA = '+serialized+';\n');
+fs.writeFileSync(path.join(repo,'covered-call-lab/common-period-data.js'),'/* Recorded common-period projection. Sources and definitions are carried with the data. */\nwindow.CCL_COMMON_PERIOD_DATA = '+serialized+';\n');
 console.log(JSON.stringify({sourceDay:day,benchmarkInputs:benchmarkInputs.length,recordedCash:combined.cash,recordedNAV:combined.total,recordedGain:combined.strategy_total_return,ledgerRows:patch.transactions.length,laterRows:postSeptember.length,qualifiedForRelease:false}));
