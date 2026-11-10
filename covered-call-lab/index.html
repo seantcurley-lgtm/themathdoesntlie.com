@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Covered Call Strategy Tracker | The Math Doesn't Lie</title>
+  <title>Covered Call Lab 3.0.1-rc.6 | CCL-FOS-20261106.6</title>
   <link rel="canonical" href="https://themathdoesntlie.com/covered-call-lab/">
   <link rel="stylesheet" href="tracker.css?v=3.0.0">
 </head>
 <body>
   <div class="app">
     <aside>
-      <div class="brand">Covered Call Lab v3.0.0</div>
+      <div class="brand">Covered Call Lab v3.0.1-rc.6</div>
       <div class="tag">One ledger. One market database. One source of truth.</div>
+      <div class="tag" id="cclBuildId">Build CCL-FOS-20261106.6<br>Local review · release on hold<br>Common date: November 3, 2026</div>
       <div class="nav" id="nav"></div>
     </aside>
 
@@ -37,9 +38,15 @@
   <script src="release-3.0.js?v=3.0.0"></script>
   <script src="sp500.js?v=2.9.2"></script>
   <script src="schd.js?v=2.9.2"></script>
-  <script src="market.js?v=3.0.0"></script>
+  <script>window.CCL_CANDIDATE_STORAGE_NAMESPACE='ccl.fos-review.rc3';</script>
+  <script src="market.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
   <script src="call-history-ui.js?v=3.0.0"></script>
   <script src="tracker.js?v=3.0.0-ee-access"></script>
+  <script src="fos-activity-data.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
+  <script src="common-period-model.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
+  <script src="common-period-data.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
+  <script src="fos-review-adapter.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
+  <script src="common-period-adapter.js?v=3.0.1-rc.6-CCL-FOS-20261106.6"></script>
   <script>
     render();
 

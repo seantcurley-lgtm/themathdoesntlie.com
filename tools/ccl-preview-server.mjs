@@ -1,0 +1,39 @@
+import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
+const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),port=8176;
+const git=(...args)=>execFileSync('git',['-C',repo,...args],{env:{...process.env,GIT_OPTIONAL_LOCKS:'0'}});
+const commit=git('rev-parse','HEAD').toString().trim(),version=JSON.parse(git('show',commit+':covered-call-lab/candidate-version.json'));
+const normalize=s=>s.replaceAll('\r\n','\n');if(normalize(fs.readFileSync(fileURLToPath(import.meta.url),'utf8'))!==normalize(git('show',commit+':tools/ccl-preview-server.mjs').toString()))throw Error('Preview server source differs from its commit');
+const names=['index.html','data.js','release-2.7.js','release-2.7.1.js','release-2.7.3.js','ledger-data.js','benchmark-data.js','reconciliation.js','release-3.0.js','sp500.js','schd.js','market.js','call-history-ui.js','tracker.js','tracker.css','market-data.json','quote-proxy.json','fos-activity-data.js','fos-review-adapter.js','common-period-model.js','common-period-data.js','common-period-adapter.js','candidate-version.json'];
+const assets=new Map(names.map(name=>[name,git('show',commit+':covered-call-lab/'+name)])),files=[...assets].map(([name,b])=>({name,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')}));
+const receipt={...version,commit,isolatedRepository:repo,servedFrom:'pinned committed Git blobs',preview:'http://127.0.0.1:'+port+'/covered-call-lab/?build='+version.build,files,httpOverrides:['quote-proxy.json: local bridge to existing public quote service; no Origin spoofing or financial amounts','quote-evidence.json: optional public audit metadata; client provenance is persisted independently']};
+const identity={component:receipt.component,version:receipt.version,build:receipt.build,branch:receipt.branch,commit:receipt.commit,baselineVersion:receipt.baselineVersion,baselineCommit:receipt.baselineCommit,servedFrom:receipt.servedFrom,activityThrough:receipt.activityThrough,readOnly:true,published:false};
+const quoteEvidence={},publicSymbols=new Set(JSON.parse(assets.get('market-data.json')).securities.map(s=>s.ticker));
+const currentData={window:{}};const {runInNewContext}=await import('node:vm');runInNewContext(assets.get('fos-activity-data.js').toString(),currentData);const entryTimes=Object.fromEntries(currentData.window.CCL_FOS_ACTIVITY_UPDATE.holdings.filter(h=>h.minimumMarketAt).map(h=>[h.ticker,Date.parse(h.minimumMarketAt)]));
+const server=http.createServer(async(req,res)=>{
+ if(!['127.0.0.1:'+port,'localhost:'+port].includes(req.headers.host)||req.headers['sec-fetch-site']==='cross-site'&&req.headers['sec-fetch-mode']!=='navigate'){res.writeHead(403);return res.end('Local candidate only');}
+ if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end('Read-only preview');}
+ res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cross-Origin-Resource-Policy','same-origin');res.setHeader('X-CCL-Version',receipt.version);res.setHeader('X-CCL-Build',receipt.build);res.setHeader('X-CCL-Commit',receipt.commit);res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'");
+ try{
+  const url=new URL(req.url,'http://'+req.headers.host),pathname=decodeURIComponent(url.pathname);
+  if(pathname==='/'){res.writeHead(302,{Location:'/covered-call-lab/?build='+receipt.build});return res.end();}
+  if(pathname==='/health'){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({...identity,pid:process.pid,assetCount:assets.size,httpOverrides:receipt.httpOverrides,quoteBridge:'Existing public quote service; public ticker symbols only; no forwarded Origin, cookies, accounts, quantities or financial amounts'}));}
+  if(pathname==='/quote-evidence.json'){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({quotes:quoteEvidence,source:'Existing public CCL quote service',retrievalTimeIsNotMarketTime:true}));}
+  if(pathname==='/review-quote-gateway/quotes'){
+   res.setHeader('Content-Type','application/json');const symbols=[...new Set(String(url.searchParams.get('symbols')||'').split(',').filter(Boolean))];
+   if(!symbols.length||symbols.length>12||symbols.some(t=>!publicSymbols.has(t))){res.writeHead(400);return res.end(JSON.stringify({error:'Request 1–12 symbols from the committed public market universe'}));}
+   try{
+    // The existing worker explicitly permits normal server requests with no Origin.
+    // Do not spoof a production Origin, forward browser credentials, or change worker policy.
+    const upstream=await fetch('https://covered-call-quotes.sean-t-curley.workers.dev/quotes?symbols='+encodeURIComponent(symbols.join(',')),{headers:{accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(25000)}),payload=await upstream.json(),quotes={},failed=[...(payload.failed||[])];
+    for(const ticker of symbols){const q=payload.quotes?.[ticker];if(!q)continue;const marketMs=Number(q.marketTimestamp)*1000;if(!Number.isFinite(marketMs)||marketMs<=0||marketMs>Date.now()+60000||entryTimes[ticker]&&marketMs<entryTimes[ticker]){failed.push({ticker,error:'Provider market timestamp is missing, future-dated, or predates strategy entry'});continue;}quotes[ticker]=q;quoteEvidence[ticker]={price:q.price,marketAsOf:new Date(marketMs).toISOString(),retrievedAt:q.retrievedAt,source:'Existing Finnhub quote gateway'};}
+    if(!upstream.ok)for(const ticker of symbols)if(!quotes[ticker]&&!failed.some(f=>f.ticker===ticker))failed.push({ticker,error:'Existing quote service HTTP '+upstream.status+(payload.error?': '+payload.error:'')});
+    const code=Object.keys(quotes).length?200:upstream.ok?502:upstream.status;res.writeHead(code);return res.end(JSON.stringify({quotes,failed,retrievedAt:payload.retrievedAt||new Date().toISOString(),error:payload.error,diagnostic:!upstream.ok?{stage:'upstream',code:'UPSTREAM_HTTP_ERROR',status:upstream.status}:undefined,previewBridge:true}));
+   }catch(error){const detail='Existing quote service could not be reached'+(error.cause?.code?' ('+error.cause.code+')':'')+': '+error.message;res.writeHead(502);return res.end(JSON.stringify({quotes:{},failed:symbols.map(ticker=>({ticker,error:detail})),error:detail,diagnostic:{stage:'upstream',code:'UPSTREAM_UNREACHABLE'},previewBridge:true}));}
+  }
+  if(!pathname.startsWith('/covered-call-lab/')){res.writeHead(404);return res.end('Not a candidate path');}
+  const relative=pathname.slice('/covered-call-lab/'.length)||'index.html';if(!assets.has(relative)){res.writeHead(404);return res.end('Not a committed approved asset');}
+  if(relative==='index.html'&&url.searchParams.has('build')&&url.searchParams.get('build')!==receipt.build){res.writeHead(409);return res.end('Requested build is not the committed candidate served here');}
+  if(relative==='quote-proxy.json'){res.setHeader('Content-Type','application/json');return res.end(JSON.stringify({endpoint:'/review-quote-gateway',version:receipt.version,build:receipt.build,previewOnly:true}));}
+  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json'};res.setHeader('Content-Type',(mime[path.extname(relative)]||'application/octet-stream')+'; charset=utf-8');res.end(req.method==='HEAD'?undefined:assets.get(relative));
+ }catch{res.writeHead(400);res.end('Invalid candidate request');}
+});server.on('error',e=>{console.error(e.code);process.exitCode=1;});server.listen(port,'127.0.0.1',()=>console.log(JSON.stringify({...identity,url:receipt.preview,pid:process.pid})));

@@ -1,0 +1,17 @@
+{
+  "component": "Covered Call Lab",
+  "version": "3.0.1-rc.6",
+  "build": "CCL-FOS-20261106.6",
+  "releaseStatus": "local review candidate; release held pending qualification and user review",
+  "baselineVersion": "3.0.0",
+  "baselineCommit": "dcd06df934db45e4f12f6192cea99bc2e32e9e7c",
+  "activityThrough": "2026-11-03",
+  "branch": "ccl/3.0.1-rc.6-benchmarks-20261106",
+  "publicMarketSnapshot": "2026-11-03T17:44:27.591Z",
+  "valuationSourceDay": "2026-11-03",
+  "optionReferenceSourceDay": "2026-11-03",
+  "comparisonStart": "2026-03-31",
+  "comparisonEnd": "2026-11-03",
+  "previewPort": 8176,
+  "liveOptionReferenceSourceDay": "2026-11-02"
+}
